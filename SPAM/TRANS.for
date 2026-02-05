@@ -141,6 +141,8 @@ C         will depend on whether actual soil evapo (EVAP) meets EOS
 
         EOP = MAX(EOP,0.0)
 
+        PRINT *, 'DEBUG: TRANS - Potential Transpiration (EOP, mm/d)=', EOP
+
 !***********************************************************************
 !***********************************************************************
 !     END OF DYNAMIC IF CONSTRUCT
