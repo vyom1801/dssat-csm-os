@@ -123,6 +123,7 @@ C=======================================================================
       REAL, DIMENSION(NL) :: SW_mm, SWDELTS_mm, SWDELTU_mm
       REAL, DIMENSION(NL) :: SWDELTX_mm, SWDELTT_mm, SWDELTL_mm
 
+      REAL SWDELTX_TOT
 !     Weather variables
       REAL RAIN, TMAX
 
@@ -275,6 +276,11 @@ C=======================================================================
 !***********************************************************************
       ELSEIF (DYNAMIC .EQ. RATE) THEN
 !-----------------------------------------------------------------------
+      PRINT *, '--------------------------------------------------------------------------------'
+      PRINT *, 'DEBUG: WATBAL - Daily Rate Calculation Start for Day: ', YRDOY
+      PRINT *, '  Inputs: Rain (mm)=', RAIN, ', Irrigation (mm)=', IRRAMT, ', Snow (mm)=', SNOW
+      PRINT *, '  Inputs: Flood depth (mm)=', FLOOD, ', Soil Evaporation (mm/d)=', ES
+
       !Convert snowfall into precip ( = rain)
       !This is needed for winter crops even if water not simulated.
 C-GH   IF (TMAX .LE. 1.0 .OR. SNOW .GT. 0.001) THEN
@@ -465,8 +471,19 @@ C       extraction (based on yesterday's values) for each soil layer.
       ELSEIF (DYNAMIC .EQ. INTEGR) THEN
 !-----------------------------------------------------------------------
       IF (ISWWAT .EQ. 'Y') THEN
+        
+        PRINT *, 'DEBUG: WATBAL - Daily Integration Start for Day: ', YRDOY
+        PRINT *, '  Water Balance Components:'
+        PRINT *, '    Infiltration (mm)=', FLOODWAT % INFILT, ', Runoff (mm)=', FLOODWAT % RUNOFF
+        PRINT *, '    Profile Drainage (mm)=', DRAIN, ', Upward Flow from below (cm/d)=', UPFLOW(1)
+        PRINT *, '    Soil Evaporation (mm/d)=', ES, ', Snow melt/accumulation (mm)=', SNOW
+        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - Before Integration:', SW(1)
+
 
 !       CALL SUMSW(NLAYR, DLAYR, SW, SWTOT1)
+
+        ! Calculate total root water uptake for logging
+        SWDELTX_TOT = 0.0
 
         IF (MESEV .NE. 'S' .OR. MEEVP == 'Z') THEN
 !         Perform integration of soil water fluxes
@@ -486,6 +503,7 @@ C       extraction (based on yesterday's values) for each soil layer.
           SW_mm(L)      =      SW(L) * DLAYR_YEST(L) * 10. !current SW
           SWDELTS_mm(L) = SWDELTS(L) * DLAYR_YEST(L) * 10. !drainage
           SWDELTX_mm(L) = SWDELTX(L) * DLAYR_YEST(L) * 10. !root extr.
+          SWDELTX_TOT   = SWDELTX_TOT + SWDELTX_mm(L)
           SWDELTL_mm(L) = SWDELTL(L) * DLAYR_YEST(L) * 10. !tillage
           SWDELTU_mm(L) = SWDELTU(L) * DLAYR_YEST(L) * 10. !upflow
           SWDELTT_mm(L) = SWDELTT(L) * DLAYR_YEST(L) * 10. !tiledrain
@@ -504,6 +522,9 @@ C       extraction (based on yesterday's values) for each soil layer.
           IF (abs(NewSW) < 1.e-4) NewSW = 0.0
           SW(L) = NewSW
         ENDDO
+        PRINT *, '  Actual Water Uptake by Roots (mm):', -SWDELTX_TOT
+        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - After Integration: ', SW(1)
+        PRINT *, '--------------------------------------------------------------------------------'
 
         !Update mulch water content
 !       IF (INDEX('RSN',MEINF) .LE. 0) THEN
@@ -688,4 +709,3 @@ C=====================================================================
 !-----------------------------------------------------------------------
 !     END SUBROUTINE WATBAL
 C=====================================================================
-
