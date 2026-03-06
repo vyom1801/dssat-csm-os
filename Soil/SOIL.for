@@ -125,10 +125,6 @@ C=====================================================================
       DYNAMIC = CONTROL % DYNAMIC
       MESOM   = ISWITCH % MESOM
 
-      IF (DYNAMIC == SEASINIT .OR. DYNAMIC == RUNINIT) THEN
-         CALL Biochar_Init(CONTROL)
-      ENDIF
-
 !***********************************************************************
 !     Call Soil Dynamics module 
 !      IF (DYNAMIC < OUTPUT) THEN
@@ -137,9 +133,9 @@ C=====================================================================
      &    WEATHER, XHLAI,                                 !Input
      &    SOILPROP)                                       !Output
          
-        IF (DYNAMIC == RUNINIT .OR. DYNAMIC == SEASINIT) THEN
-           CALL Biochar_Init(CONTROL)
-        ENDIF
+      IF (DYNAMIC == RUNINIT .OR. DYNAMIC == SEASINIT) THEN
+         CALL Biochar_Init(CONTROL)
+      ENDIF
 !      ENDIF
 
       ! Biochar: Update Soil Hydraulic Properties (BD, DUL, LL, SAT)
@@ -210,7 +206,7 @@ C=====================================================================
      &    SKi_Avail)                                      !Output
 
       ! Biochar Simulation
-      CALL Biochar_Daily(CONTROL, SOILPROP)
+      !CALL Biochar_Daily(CONTROL, SOILPROP)
 
       IF (DYNAMIC == SEASINIT) THEN
 !       Soil water balance -- call last for initialization

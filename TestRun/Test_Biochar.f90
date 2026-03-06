@@ -9,7 +9,7 @@
       INTEGER :: I, L
       
       ! Environmental Variables (Mocks)
-      REAL, DIMENSION(NL) :: SW, ST, NH4, NO3
+      REAL, DIMENSION(NL) :: SW, ST, NH4, NO3, IMM(63), MNR(63)
 
       ! Initialize Control
       CONTROL % DYNAMIC = RUNINIT
@@ -32,6 +32,9 @@
       ST = 25.0   ! 25 C
       NH4 = 5.0   ! kg/ha
       NO3 = 15.0  ! kg/ha
+      IMM = 0.0   ! kg/ha
+      MNR = 0.0   ! kg/ha
+      
       
       PRINT *, "Initializing Biochar Module..."
       CALL Biochar_Init(CONTROL)
@@ -44,7 +47,7 @@
          CONTROL % DAS = I
          
          ! Daily Call
-         CALL Biochar_Daily(CONTROL, SOILPROP, SW, ST, NH4, NO3)
+         CALL Biochar_Daily(CONTROL, SOILPROP, SW, ST, NH4, NO3, IMM, MNR)
          
          ! Print status every 50 days
          IF (MOD(I, 50) == 0) THEN

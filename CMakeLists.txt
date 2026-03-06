@@ -553,7 +553,7 @@ set(
         "Plant/SUBSTOR-Potato/PT_ROOTGR.for"
         "Plant/SUBSTOR-Potato/PT_SUBSTOR.for"
         "Plant/SUBSTOR-Potato/PT_THTIME.for"
-        "Soil/Biochar_mod.f90"
+        "Soil/Biochar/Biochar_mod.f90"
         "Soil/SOIL.for"
         "Soil/CENTURY_OrganicMatter/CENTURY.for"
         "Soil/CENTURY_OrganicMatter/CE_RATIO_C.for"
@@ -687,7 +687,7 @@ endforeach()
 # Test Biochar Executable
 add_executable(Test_Biochar 
     TestRun/Test_Biochar.f90 
-    Soil/Biochar_mod.f90 
+    Soil/Biochar/Biochar_mod.f90 
     Utilities/ModuleDefs.for
     Utilities/CSMVersion.for
     Utilities/OSDefsLINUX.for 
