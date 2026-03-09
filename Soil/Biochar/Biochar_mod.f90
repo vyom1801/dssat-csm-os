@@ -48,7 +48,6 @@ MODULE Biochar_mod
         INTEGER :: ERRNUM, LUN_INP
         CHARACTER(LEN=120) :: LINE
         LOGICAL :: FEXIST
-
         NumApps = 0
         Applied = .FALSE.
         BC_Labile = 0.0; BC_Recalc = 0.0; BC_NH4_Ads = 0.0
