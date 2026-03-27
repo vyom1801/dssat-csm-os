@@ -133,7 +133,7 @@ C=====================================================================
      &    WEATHER, XHLAI,                                 !Input
      &    SOILPROP)                                       !Output
          
-      IF (DYNAMIC == RUNINIT .OR. DYNAMIC == SEASINIT) THEN
+      IF (DYNAMIC == RUNINIT) THEN
          CALL Biochar_Init(CONTROL)
       ENDIF
 !      ENDIF
