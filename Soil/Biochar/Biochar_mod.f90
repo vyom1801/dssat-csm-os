@@ -14,8 +14,7 @@ MODULE Biochar_mod
         INTEGER :: AppDate
         REAL    :: Amount, Depth, FLoss, FCarbon, FLabile
         REAL    :: MRT_Labile, MRT_Recalc, CN_BC
-        REAL    :: CEC_INIT, BCLV, Kads, Kdes
-        REAL    :: QLL, KDUL, KBD
+        REAL    :: CEC_INIT, BCLV
       END TYPE BiocharAppType
 
       INTEGER, PARAMETER :: MaxApp = 20
@@ -28,6 +27,7 @@ MODULE Biochar_mod
       REAL :: CN_BIOM = 8.0, CN_HUM = 11.0, CEC_MAX = 100.0, K_CEC = 0.001
       REAL :: UpH = 8.3, LpH = 3.5, P1_pH = 10.0
       REAL :: P_FOM = 0.0, P_E = 0.0, P_F = 0.0
+      REAL :: Kads = 0.006, Kdes = 0.006, QLL = 0.0, KDUL = -0.15, KBD = -0.1
 
       ! State Variables
       REAL, DIMENSION(NL) :: BC_Labile = 0.0, BC_Recalc = 0.0, BC_NH4_Ads = 0.0
@@ -66,7 +66,8 @@ MODULE Biochar_mod
            IF (LINE(1:1) == '!' .OR. LINE == '') CYCLE
            
            IF (LINE(1:6) == '@PARAM') THEN
-              READ(LUN_INP, *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, P_FOM, P_E, P_F, CEC_MAX, K_CEC
+              READ(LUN_INP, *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, P_FOM, P_E, P_F, CEC_MAX, K_CEC, &
+                   Kads, Kdes, QLL, KDUL, KBD, EF_BC, FR_BCBIOM, CN_BIOM, CN_HUM, UpH, LpH, P1_pH
               CYCLE
            END IF
 
@@ -79,9 +80,7 @@ MODULE Biochar_mod
                 BC_Apps(NumApps)%FLoss, BC_Apps(NumApps)%FCarbon, &
                 BC_Apps(NumApps)%FLabile, BC_Apps(NumApps)%MRT_Labile, &
                 BC_Apps(NumApps)%MRT_Recalc, BC_Apps(NumApps)%CN_BC, &
-                BC_Apps(NumApps)%CEC_INIT, BC_Apps(NumApps)%BCLV, &
-                BC_Apps(NumApps)%Kads, BC_Apps(NumApps)%Kdes, &
-                BC_Apps(NumApps)%QLL, BC_Apps(NumApps)%KDUL, BC_Apps(NumApps)%KBD
+                BC_Apps(NumApps)%CEC_INIT, BC_Apps(NumApps)%BCLV
         END DO
         CLOSE(LUN_INP)
         WRITE(*,*) "BIOCHAR: Loaded ", NumApps, " applications."
@@ -135,7 +134,7 @@ MODULE Biochar_mod
            ENDDO
 
            ! 2. DECAY & N-FLUX
-           Daily_CO2_Gross = 0.0; Daily_N_Net = 0.0
+           Daily_CO2_Gross = 0.0; Daily_N_Net = 0.0; Daily_Biom_Gross = 0.0; Daily_Hum_Gross = 0.0
            DO L = 1, SOILPROP%NLAYR
               IF (BC_Labile(L) + BC_Recalc(L) < 1.E-6) CYCLE
               
@@ -168,10 +167,12 @@ MODULE Biochar_mod
 
               dlt_Total = dltBC1 + dltBC2
               Daily_CO2_Gross = Daily_CO2_Gross + dlt_Total * (1.0 - EF_BC)
+              Daily_Biom_Gross = Daily_Biom_Gross + dlt_Total * EF_BC * FR_BCBIOM
+              Daily_Hum_Gross = Daily_Hum_Gross + dlt_Total * EF_BC * (1.0 - FR_BCBIOM)
               
               ! N Mineralization/Immobilization
               dlt_nbc_need = (dlt_Total * EF_BC * FR_BCBIOM / CN_BIOM) + &
-                             (dlt_Total * EF_BC * (1.0-FR_BCBIOM) / CN_HUM)
+                             (dlt_Total * EF_BC * (1.0 - FR_BCBIOM) / CN_HUM)
               dlt_nbc_released = dlt_Total / MAX(1.0, BC_Apps(1)%CN_BC)
               dlt_nbc = dlt_nbc_released - dlt_nbc_need
               
@@ -186,11 +187,24 @@ MODULE Biochar_mod
         CASE (OUTPUT)
            IF (FirstOutput) THEN
               OPEN(NEWUNIT=LUN_BC, FILE='BIOCHAR.OUT', STATUS='REPLACE')
-              WRITE(LUN_BC,'(A)') "@YEAR DOY DAS   BC_Labile   BC_Recalc   dlt_CO2   dlt_N_Net"
+              WRITE(LUN_BC,'(A)') "@YEAR DOY DAS   L   BC_Labile   BC_Recalc      Biom_G       Hum_G       N_Net          TF          WF          NF        SLPH        CEC8        SWXM"
               FirstOutput = .FALSE.
            ENDIF
-           WRITE(LUN_BC, '(I5, I4, I5, 4F12.4)') YEAR, DOY, CONTROL%DAS, &
-                 SUM(BC_Labile), SUM(BC_Recalc), Daily_CO2_Gross, Daily_N_Net
+           DO L = 1, SOILPROP%NLAYR
+              ! Recalculate factors
+              WF = MIN(1.0, MAX(0.0, (SW(L)-SOILPROP%LL(L))/MAX(0.01, SOILPROP%DUL(L)-SOILPROP%LL(L))))
+              TF = MIN(1.0, MAX(0.0, (MAX(0.0, ST(L))/32.0)**2))
+              NF = 1.0
+              IF ((NH4(L)+NO3(L)) > 0.01 .AND. Opt_bc > 0.0) THEN
+                 NF = MIN(1.0, EXP(-CNRF_BC * ((BC_Labile(L)/MAX(0.01, NH4(L)+NO3(L))) - Opt_bc)/Opt_bc))
+              ELSEIF (BC_Labile(L) > 1.E-6) THEN
+                 NF = 0.0
+              ENDIF
+              
+              WRITE(LUN_BC, '(I5, I4, I5, I4, 11F12.4)') YEAR, DOY, CONTROL%DAS, L, &
+                    BC_Labile(L), BC_Recalc(L), Daily_Biom_Gross, Daily_Hum_Gross, Daily_N_Net, &
+                    TF, WF, NF, SOILPROP%PH(L), SOILPROP%CEC(L), SW(L)
+           ENDDO
         END SELECT
       END SUBROUTINE Biochar_Daily
 
@@ -257,7 +271,7 @@ MODULE Biochar_mod
               S      = SOILPROP%SAND(L) / 100.0
               C      = SOILPROP%CLAY(L) / 100.0
               OM_Nat = SOILPROP%OC(L) * 1.72 / 100.0  ! Convert OC to OM fraction
-              OM_New = OM_Nat + (BC_Mass_Fraction * EXP(BC_Apps(1)%KBD)) ! Effective OM
+              OM_New = OM_Nat + (BC_Mass_Fraction * EXP(KBD)) ! Effective OM
 
               ! 3. Get Native and New Properties via Saxton-Rawls
               CALL SaxtonRawls(S, C, OM_Nat, BD_Old, LL_Old, DUL_Old, SAT_Old)
