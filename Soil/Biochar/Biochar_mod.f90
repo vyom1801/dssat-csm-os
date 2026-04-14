@@ -187,6 +187,11 @@ MODULE Biochar_mod
         CASE (OUTPUT)
            IF (FirstOutput) THEN
               OPEN(NEWUNIT=LUN_BC, FILE='BIOCHAR.OUT', STATUS='REPLACE')
+              WRITE(LUN_BC,'(A)') "! Biochar Parameters"
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.6)') "! CNRF_BC=", CNRF_BC, " Opt_bc=", Opt_bc, " P_FOM=", P_FOM, " K_CEC=", K_CEC
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! Kads=", Kads, " Kdes=", Kdes, " QLL=", QLL, " KDUL=", KDUL
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! KBD=", KBD, " EF_BC=", EF_BC, " FR_BCBIOM=", FR_BCBIOM, " CN_BIOM=", CN_BIOM
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! CN_HUM=", CN_HUM, " UpH=", UpH, " LpH=", LpH, " P1pH=", P1_pH
               WRITE(LUN_BC,'(A)') "@YEAR DOY DAS   L   BC_Labile   BC_Recalc      Biom_G       Hum_G       N_Net          TF          WF          NF        SLPH        CEC8        SWXM"
               FirstOutput = .FALSE.
            ENDIF
