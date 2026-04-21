@@ -32,13 +32,14 @@ MODULE Biochar_mod
       ! State Variables
       REAL, DIMENSION(NL) :: BC_Labile = 0.0, BC_Recalc = 0.0, BC_NH4_Ads = 0.0
       REAL, DIMENSION(NL) :: NativeCEC = 0.0, Prev_BC_Mass_g_g = 0.0
+      REAL, DIMENSION(NL) :: NativeBD = 0.0, NativeLL = 0.0, NativeDUL = 0.0, NativeSAT = 0.0
       REAL, DIMENSION(NL) :: dlt_nbc_rel_prev = 0.0
       
       ! Daily Fluxes
       REAL :: Daily_CO2_Gross, Daily_Biom_Gross, Daily_Hum_Gross, Daily_N_Net
 
       INTEGER :: LUN_BC = 0
-      LOGICAL :: FirstOutput = .TRUE., FirstRun = .TRUE.
+      LOGICAL :: FirstOutput = .TRUE., FirstRun_Props = .TRUE.
 
       CONTAINS
 
@@ -93,17 +94,14 @@ MODULE Biochar_mod
         REAL, DIMENSION(NL), INTENT(IN)  :: SW, ST, NH4, NO3
         REAL, DIMENSION(0:NL, NELEM), INTENT(INOUT) :: IMM, MNR
         
-        INTEGER :: YRDOY, L, iApp, YEAR, DOY
+        INTEGER :: YRDOY, L, iApp, YEAR, DOY, Age_days
+        INTEGER, EXTERNAL :: TIMDIF
         REAL :: WF, TF, NF, MF, DecayRate1, DecayRate2, dltBC1, dltBC2, dlt_Total
         REAL :: dlt_nbc_need, dlt_nbc_released, dlt_nbc
-        REAL :: SoilMass, BC_Mass_g_g, Age, CEC_t, MassInLayer
+        REAL :: SoilMass, BC_Mass_g_g, CEC_t, MassInLayer
 
         YRDOY = CONTROL%YRDOY
         CALL YR_DOY(YRDOY, YEAR, DOY)
-        IF (FirstRun) THEN
-           NativeCEC = SOILPROP%CEC
-           FirstRun = .FALSE.
-        ENDIF
 
         SELECT CASE (CONTROL%DYNAMIC)
         CASE (INTEGR)
@@ -129,12 +127,31 @@ MODULE Biochar_mod
                        ENDIF
                     ENDIF
                  ENDDO
-                 Applied(iApp) = .TRUE.
-              ENDIF
-           ENDDO
+                  Applied(iApp) = .TRUE.
+               ENDIF
+            ENDDO
 
-           ! 2. DECAY & N-FLUX
-           Daily_CO2_Gross = 0.0; Daily_N_Net = 0.0; Daily_Biom_Gross = 0.0; Daily_Hum_Gross = 0.0
+            ! 1.5 CEC Aging
+            DO L = 1, SOILPROP%NLAYR
+               SOILPROP%CEC(L) = NativeCEC(L)
+            ENDDO
+            DO iApp = 1, NumApps
+               IF (Applied(iApp)) THEN
+                  Age_days = TIMDIF(BC_Apps(iApp)%AppDate, YRDOY)
+                  CEC_t = CEC_MAX - (CEC_MAX - BC_Apps(iApp)%CEC_INIT) * EXP(-K_CEC * REAL(Age_days))
+                  DO L = 1, SOILPROP%NLAYR
+                     MassInLayer = GetBCMassInLayer(iApp, L, SOILPROP)
+                     SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
+                     IF (SoilMass > 0.0) THEN
+                        BC_Mass_g_g = MassInLayer / SoilMass
+                        SOILPROP%CEC(L) = SOILPROP%CEC(L) + (BC_Mass_g_g * CEC_t)
+                     ENDIF
+                  ENDDO
+               ENDIF
+            ENDDO
+
+            ! 2. DECAY & N-FLUX
+            Daily_CO2_Gross = 0.0; Daily_N_Net = 0.0; Daily_Biom_Gross = 0.0; Daily_Hum_Gross = 0.0
            DO L = 1, SOILPROP%NLAYR
               IF (BC_Labile(L) + BC_Recalc(L) < 1.E-6) CYCLE
               
@@ -257,9 +274,19 @@ MODULE Biochar_mod
           TYPE(SoilType), INTENT(INOUT) :: SOILPROP
           INTEGER :: L
           REAL :: BC_Mass_Fraction, SoilMass_kgHa, BC_Total_C
+
           REAL :: S, C, OM_Nat, OM_New
           REAL :: BD_New, LL_New, DUL_New, SAT_New
           REAL :: BD_Old, LL_Old, DUL_Old, SAT_Old
+
+          IF (FirstRun_Props) THEN
+             NativeBD  = SOILPROP%BD
+             NativeLL  = SOILPROP%LL
+             NativeDUL = SOILPROP%DUL
+             NativeSAT = SOILPROP%SAT
+             NativeCEC = SOILPROP%CEC
+             FirstRun_Props = .FALSE.
+          ENDIF
 
           IF (NumApps == 0) RETURN
 
@@ -282,10 +309,10 @@ MODULE Biochar_mod
               CALL SaxtonRawls(S, C, OM_Nat, BD_Old, LL_Old, DUL_Old, SAT_Old)
               CALL SaxtonRawls(S, C, OM_New, BD_New, LL_New, DUL_New, SAT_New)
 
-              ! 4. Apply Delta to DSSAT Soil Object
-              SOILPROP%BD(L)  = MAX(0.5, MIN(2.0, SOILPROP%BD(L) + (BD_New - BD_Old)))
-              SOILPROP%LL(L)  = MAX(0.01, SOILPROP%LL(L) + (LL_New - LL_Old))
-              SOILPROP%DUL(L) = MAX(SOILPROP%LL(L)+0.01, SOILPROP%DUL(L) + (DUL_New - DUL_Old))
+              ! 4. Apply Saxton-Rawls Delta + Calibration Modifiers
+              SOILPROP%BD(L)  = MAX(0.5, MIN(2.0, NativeBD(L) + (BD_New - BD_Old)))
+              SOILPROP%LL(L)  = MAX(0.01, NativeLL(L) + (LL_New - LL_Old) + (BC_Mass_Fraction * QLL))
+              SOILPROP%DUL(L) = MAX(SOILPROP%LL(L)+0.01, NativeDUL(L) + (DUL_New - DUL_Old) + (BC_Mass_Fraction * KDUL))
               SOILPROP%SAT(L) = MAX(SOILPROP%DUL(L)+0.01, 1.0 - (SOILPROP%BD(L)/2.65))
           END DO
       END SUBROUTINE Biochar_UpdateSoilProps
