@@ -143,7 +143,18 @@ def parse_dssat_summary(text):
         'ETCM': 'Seasonal_ET_mm',
         'NUCM': 'N_Uptake_kg_ha',
         'TMAXA': 'Avg_Max_Temp',
-        'TMINA': 'Avg_Min_Temp'
+        'TMINA': 'Avg_Min_Temp',
+        'DRCM': 'Seasonal_Drainage_mm',
+        'NFXM': 'N_Fixed_kg_ha',
+        'NIAM': 'Soil_Inorg_N_Maturity_kg_ha',
+        'NMINC': 'Net_N_Mineralization_kg_ha',
+        'GNAM': 'Harvest_Prod_N_kg_ha',
+        'NLCM': 'N_Leaching_kg_ha',
+        'N2OEM': 'N2O_Emissions_kg_ha',
+        'CO2EM': 'CO2_Emitted_kg_ha',
+        'CH4EM': 'Methane_Emissions_kg_ha',
+        'ONAM': 'Org_Soil_N_Maturity_kg_ha',
+        'OCAM': 'Org_Soil_C_Maturity_kg_ha'
     }
 
     # Rename columns that exist in the mapping

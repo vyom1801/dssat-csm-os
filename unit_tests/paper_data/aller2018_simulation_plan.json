@@ -1,0 +1,301 @@
+{
+  "runs": {
+    "run1_N75_B21": {
+      "N_rate": 75,
+      "biochar_rate_Mg_ha": 21,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N75",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B22_N75",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B22_N75",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run2_N75_B43": {
+      "N_rate": 75,
+      "biochar_rate_Mg_ha": 43,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N75",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B44_N75",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B44_N75",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run3_N75_B86": {
+      "N_rate": 75,
+      "biochar_rate_Mg_ha": 86,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N75",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B89_N75",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B89_N75",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run4_N150_B21": {
+      "N_rate": 150,
+      "biochar_rate_Mg_ha": 21,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N150",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B22_N150",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B22_N150",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run5_N150_B43": {
+      "N_rate": 150,
+      "biochar_rate_Mg_ha": 43,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N150",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B44_N150",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B44_N150",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run6_N150_B86": {
+      "N_rate": 150,
+      "biochar_rate_Mg_ha": 86,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N150",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B89_N150",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B89_N150",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run7_N225_B21": {
+      "N_rate": 225,
+      "biochar_rate_Mg_ha": 21,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N225",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B22_N225",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B22_N225",
+          "biochar": {
+            "amount": 21728.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run8_N225_B43": {
+      "N_rate": 225,
+      "biochar_rate_Mg_ha": 43,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N225",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B44_N225",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B44_N225",
+          "biochar": {
+            "amount": 43456.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    },
+    "run9_N225_B86": {
+      "N_rate": 225,
+      "biochar_rate_Mg_ha": 86,
+      "scenarios": {
+        "control": {
+          "treatment_id": "Co_B0_N225",
+          "biochar": {
+            "amount": 0.0,
+            "FCarbon": 0.0,
+            "CN_BC": 0.0,
+            "UpH": 0.0
+          }
+        },
+        "hardwood": {
+          "treatment_id": "Ha_B89_N225",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.743,
+            "CN_BC": 148.0,
+            "UpH": 9.1
+          }
+        },
+        "corn_stover": {
+          "treatment_id": "Co_B89_N225",
+          "biochar": {
+            "amount": 86912.0,
+            "FCarbon": 0.62,
+            "CN_BC": 45.0,
+            "UpH": 9.8
+          }
+        }
+      }
+    }
+  }
+}

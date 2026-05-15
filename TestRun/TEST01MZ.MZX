@@ -11,7 +11,7 @@ Site
 
 *TREATMENTS -------------------------FACTOR LEVELS------------
 @N R O C TNAME.................... CU FL SA IC MP MI MF MR MC MT ME MH SM
- 1 1 1 0 AG9010 - Rainfed           2  1  0  1  1  1  1  0  0  0  0  0  1
+ 1 1 1 0 AG9010 - Rainfed           3  1  0  1  1  1  1  0  0  0  0  0  1
 *CULTIVARS
 @C CR INGENO CNAME
  1 MZ IB0001 Generic Maize
@@ -20,13 +20,13 @@ Site
 
 *FIELDS
 @L ID_FIELD WSTA....  FLSA  FLOB  FLDT  FLDD  FLDS  FLST  SLTX  SLDP ID_SOIL  FLNAME
- 1 MZCER048 UFGA       -99   -99   -99   -99   -99   -99   -99   -99 IB00720001  RAINFED EXPERIMENT
+ 1 MZCER048 UGFA       -99   -99   -99   -99   -99   -99   -99   -99 IB00720001  RAINFED EXPERIMENT
 @L ...........XCRD ...........YCRD .....ELEV .............AREA .SLEN .FLWR .SLAS FLHST FHDUR
  1             -99             -99       -99               -99   -99   -99   -99   -99   -99
 
 *INITIAL CONDITIONS
 @C   PCR ICDAT  ICRT  ICND  ICRN  ICRE  ICWD ICRES ICREN ICREP ICRIP ICRID ICNAME
- 1    MZ 12001   -99   -99     1     1   -99   500   1.0   0.0   100     2 rainfed
+ 1    MZ 85001   -99   -99     1     1   -99   500   1.0   0.0   100     2 rainfed
 @C  ICBL  SH2O  SNH4  SNO3
  1     5 0.185     5    15
  1    10 0.185     5    15
@@ -40,7 +40,7 @@ Site
 
 *PLANTING DETAILS
 @P PDATE EDATE  PPOP  PPOE  PLME  PLDS  PLRS  PLRD  PLDP  PLWT  PAGE  PENV  PLPH  SPRL PLNAME
- 1 12130   -99     7     7     S     R    76   -99     7   -99   -99   -99   -99     0 -99
+ 1 85130   -99     7     7     S     R    76   -99     7   -99   -99   -99   -99     0 -99
 
 *IRRIGATION AND WATER MANAGEMENT
 @I  EFIR  IDEP  ITHR  IEPT  IOFF  IAME  IAMT IRNAME
@@ -50,8 +50,8 @@ Site
 
 *FERTILIZERS (INORGANIC)
 @F FDATE  FMCD  FACD  FDEP  FAMN  FAMP  FAMK  FAMC  FAMO  FOCD FERNAME
-1      1 FE001 AP002    15   212   -99   -99   -99   -99   -99 high
-1     63 FE001 AP002    15   166   -99   -99   -99   -99   -99 high
+1      1 FE001 AP002    15    225   -99   -99   -99   -99   -99 N225
+
 
 *TILLAGE AND ROTATIONS
 @T ADATE TIMPL  TDEP TNAME
@@ -60,15 +60,16 @@ Site
 
 *SIMULATION CONTROLS
 @N GENERAL     NYERS NREPS START SDATE RSEED SNAME.................... SMODEL
- 1 GE              1     1     W 12001  2150 2001 Maize Experiment Ir  MZCER
+ 1 GE             32     1     W 85001  2150 2001 Maize Experiment Ir  MZCER
 @N OPTIONS     WATER NITRO SYMBI PHOSP POTAS DISES  CHEM  TILL   CO2
  1 OP              Y     Y     Y     N     N     N     N     N     M
 @N METHODS     WTHER INCON LIGHT EVAPO INFIL PHOTO HYDRO NSWIT MESOM MESEV MESOL
  1 ME              M     M     E     R     S     C     R     1     G     R     2
 @N MANAGEMENT  PLANT IRRIG FERTI RESID HARVS
- 1 MA              A     A     A     A     M
+ 1 MA              R     N     D     A     M
 @N OUTPUTS     FNAME OVVEW SUMRY FROPT GROUT CAOUT WAOUT NIOUT MIOUT DIOUT VBOSE CHOUT OPOUT FMOPT
- 1 OU              Y     Y     Y    14     Y     N     N     N     N     N     Y     Y     Y     A
+ 1 OU              N     Y     Y     1     Y     N     N     N     N     N     Y     N     Y     A
+
 
 @ AUTOMATIC MANAGEMENT
 @N PLANTING    PFRST PLAST PH2OL PH2OU PH2OD PSTMX PSTMN

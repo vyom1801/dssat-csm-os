@@ -1,9 +1,7 @@
 ! Parameters
 @PARAM CNRF_BC Opt_bc  P_FOM   P_E   P_F   CEC_MAX K_CEC  Kads  Kdes  QLL   KDUL  KBD  EF_BC FR_BCBIOM CN_BIOM CN_HUM UpH LpH P1pH
-       0.693   25.0    0.1     0.0   0.0   100.0   0.0001 0.006 0.006 0.0   -0.15 -0.1  0.4   0.05      8.0     11.0   8.3 3.5 10.0
+       0.693 25.0 0.1 0.0 0.0 100.0 0.0001 0.006 0.006 0.0 3.1 -0.1 0.4 0.05 8.0 11.0 9.8 3.5 10.0
 
 ! Applications
 ! AppDate Amount Depth FLoss FCarbon FLabile MRT1 MRT2 CN_BC CEC_INIT BCLV
-! YrDoy   kg/ha  cm    0-1   0-1     0-1     yrs  yrs  g/g   cmol/kg  cmol/kg
-! Example: Application on 2008-05-15 (2008136)
-  2012130 20000.0 20.0  0.02  0.40    0.10    0.5  200.0 15.0 187.0    50.0
+  1985130 86912.0 20.0 0.0 0.62 0.10 0.5 200.0 45.0 40.0 1.5

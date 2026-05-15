@@ -1,6 +1,6 @@
 *MANAGEMENT OPERATIONS EVENT SUMMARY
 
-*DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_soil  MAR 06, 2026 13:55:27
+*DSSAT Cropping System Model Ver. 4.8.5.041 -biochar/integerated  APR 28, 2026 10:38:08
 
 *RUN   1        : AG9010 - Rainfed          MZCER048 TEST01MZ    1
  MODEL          : MZCER048 - Maize
@@ -43,24 +43,24 @@
    1 MAY  6, 2012  127    127     14  MZ                Irrigation         6.2 mm
    1 MAY  7, 2012  128    128     15  MZ                Irrigation         7.0 mm
    1 MAY  8, 2012  129    129     16  MZ                Irrigation         6.4 mm
-   1 MAY 11, 2012  132    132     19  MZ                Irrigation         8.7 mm
-   1 MAY 13, 2012  134    134     21  MZ                Irrigation         9.3 mm
+   1 MAY 11, 2012  132    132     19  MZ                Irrigation         8.6 mm
+   1 MAY 13, 2012  134    134     21  MZ                Irrigation         9.2 mm
    1 MAY 14, 2012  135    135     22  MZ                Irrigation         5.7 mm
-   1 MAY 16, 2012  137    137     24  MZ                Irrigation         8.3 mm
+   1 MAY 16, 2012  137    137     24  MZ                Irrigation         8.4 mm
    1 MAY 18, 2012  139    139     26  MZ  01 End Juveni
    1 MAY 22, 2012  143    143     30  MZ  02 Floral Ini
-   1 MAY 22, 2012  143    143     30  MZ                Irrigation         8.2 mm
-   1 MAY 23, 2012  144    144     31  MZ                Irrigation         6.5 mm
-   1 MAY 25, 2012  146    146     33  MZ                Irrigation        10.1 mm
-   1 MAY 28, 2012  149    149     36  MZ                Irrigation         9.5 mm
+   1 MAY 22, 2012  143    143     30  MZ                Irrigation         7.8 mm
+   1 MAY 23, 2012  144    144     31  MZ                Irrigation         6.6 mm
+   1 MAY 25, 2012  146    146     33  MZ                Irrigation        10.0 mm
+   1 MAY 28, 2012  149    149     36  MZ                Irrigation         9.2 mm
    1 MAY 29, 2012  150    150     37  MZ                Irrigation         6.3 mm
    1 MAY 30, 2012  151    151     38  MZ                Irrigation         6.9 mm
    1 MAY 31, 2012  152    152     39  MZ                Irrigation         6.6 mm
    1 JUN  1, 2012  153    153     40  MZ                Irrigation         7.5 mm
    1 JUN  2, 2012  154    154     41  MZ                Irrigation         6.2 mm
-   1 JUN  8, 2012  160    160     47  MZ                Irrigation         9.0 mm
+   1 JUN  8, 2012  160    160     47  MZ                Irrigation         8.9 mm
    1 JUN 10, 2012  162    162     49  MZ                Irrigation         8.2 mm
-   1 JUN 13, 2012  165    165     52  MZ                Irrigation        10.9 mm
+   1 JUN 13, 2012  165    165     52  MZ                Irrigation        10.6 mm
    1 JUN 14, 2012  166    166     53  MZ                Irrigation         6.2 mm
    1 JUN 15, 2012  167    167     54  MZ                Irrigation         5.7 mm
    1 JUN 16, 2012  168    168     55  MZ  03 75% Silkin
@@ -73,14 +73,14 @@
    1 JUN 26, 2012  178    178     65  MZ                Irrigation         6.0 mm
    1 JUN 27, 2012  179    179     66  MZ  04 Beg Gr Fil
    1 JUN 28, 2012  180    180     67  MZ                Irrigation        10.3 mm
-   1 JUL  7, 2012  189    189     76  MZ                Irrigation         9.3 mm
-   1 JUL  9, 2012  191    191     78  MZ                Irrigation         5.8 mm
+   1 JUL  7, 2012  189    189     76  MZ                Irrigation         8.9 mm
+   1 JUL  9, 2012  191    191     78  MZ                Irrigation         5.7 mm
    1 JUL 11, 2012  193    193     80  MZ                Irrigation        10.9 mm
    1 JUL 15, 2012  197    197     84  MZ                Irrigation         8.7 mm
-   1 JUL 18, 2012  200    200     87  MZ                Irrigation         9.4 mm
-   1 JUL 23, 2012  205    205     92  MZ                Irrigation         8.4 mm
-   1 JUL 24, 2012  206    206     93  MZ                Irrigation         6.3 mm
-   1 JUL 28, 2012  210    210     97  MZ                Irrigation         8.4 mm
+   1 JUL 18, 2012  200    200     87  MZ                Irrigation         9.3 mm
+   1 JUL 23, 2012  205    205     92  MZ                Irrigation         7.7 mm
+   1 JUL 24, 2012  206    206     93  MZ                Irrigation         6.5 mm
+   1 JUL 28, 2012  210    210     97  MZ                Irrigation         8.3 mm
    1 JUL 29, 2012  211    211     98  MZ  05 End Gr Fil
    1 JUL 30, 2012  212    212     99  MZ                Irrigation         8.2 mm
    1 JUL 31, 2012  213    213    100  MZ  16 Harvest   
