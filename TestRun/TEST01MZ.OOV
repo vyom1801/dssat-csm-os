@@ -1,6 +1,6 @@
 *SIMULATION OVERVIEW FILE
 
-*DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_soil  MAR 06, 2026 13:55:27
+*DSSAT Cropping System Model Ver. 4.8.5.041 -feat/integrate_multi_biochar_models  MAY 20, 2026 09:25:40
 
 *RUN   1        : AG9010 - Rainfed          MZCER048 TEST01MZ    1
  MODEL          : MZCER048 - Maize
@@ -131,7 +131,7 @@ RUNOFF CURVE # :75.00      DRAINAGE RATE     : 0.50         FERT. FACTOR : 1.00
    Dry Matter Productivity                  7.08 kg[DM]/m3[EP]            =   70.8 kg[DM]/ha per mm[EP]
    Yield Productivity                       4.27 kg[grain yield]/m3[EP]   =   42.7 kg[yield]/ha per mm[EP]
 
- Irrigation during growing season          502.7 mm[irrig]
+ Irrigation during growing season          503.0 mm[irrig]
    Dry Matter Productivity                  3.20 kg[DM]/m3[irrig]         =   32.0 kg[DM]/ha per mm[irrig]
    Yield Productivity                       1.93 kg[grain yield]/m3[irrig]=   19.3 kg[yield]/ha per mm[irrig]
 

@@ -9,7 +9,8 @@
       INTEGER :: I, L
       
       ! Environmental Variables (Mocks)
-      REAL, DIMENSION(NL) :: SW, ST, NH4, NO3, IMM(63), MNR(63)
+      REAL, DIMENSION(NL) :: SW, ST, NH4, NO3
+      REAL, DIMENSION(0:NL, NELEM) :: IMM, MNR
 
       ! Initialize Control
       CONTROL % DYNAMIC = RUNINIT

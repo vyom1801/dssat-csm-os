@@ -1,4 +1,4 @@
-*EVALUATION : TEST01MZMZ                                                              DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_    MAR 06, 2026; 13:55:27
+*EVALUATION : TEST01MZMZ                                                              DSSAT Cropping System Model Ver. 4.8.5.041 -feat/inte    MAY 20, 2026; 09:25:51
 
 @RUN EXCODE        TN RN CR   ADAPS   ADAPM   PD1PS   PD1PM   PDFPS   PDFPM   MDAPS   MDAPM   HWAMS   HWAMM   PWAMS   PWAMM   H#AMS   H#AMM   HWUMS   HWUMM   H#UMS   H#UMM   CWAMS   CWAMM   BWAMS   BWAMM   LAIXS   LAIXM   HIAMS   HIAMM   THAMS   THAMM   GNAMS   GNAMM   CNAMS   CNAMM   SNAMS   SNAMM   GN%MS   GN%MM   CWAAS   CWAAM   CNAAS   CNAAM   L#SMS   L#SMM   EDAPS   EDAPM
    1 TEST01MZMZ     1  1 MZ      55     -99     -99     -99     -99     -99     100     -99    9697     -99     -99     -99    3542     -99  0.2738     -99   506.0     -99   16088     -99    6425     -99    2.14     -99   0.603     -99     -99     -99     166     -99     192     -99      26     -99     1.7     -99    3983     -99      73     -99   14.32     -99      12     -99

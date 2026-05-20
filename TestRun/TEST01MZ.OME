@@ -1,6 +1,6 @@
 *MANAGEMENT OPERATIONS EVENT SUMMARY
 
-*DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_soil  MAR 06, 2026 13:55:27
+*DSSAT Cropping System Model Ver. 4.8.5.041 -feat/integrate_multi_biochar_models  MAY 20, 2026 09:25:40
 
 *RUN   1        : AG9010 - Rainfed          MZCER048 TEST01MZ    1
  MODEL          : MZCER048 - Maize
@@ -68,7 +68,7 @@
    1 JUN 17, 2012  169    169     56  MZ                Irrigation         6.2 mm
    1 JUN 18, 2012  170    170     57  MZ                Irrigation         5.7 mm
    1 JUN 20, 2012  172    172     59  MZ                Irrigation        11.0 mm
-   1 JUN 23, 2012  175    175     62  MZ                Irrigation         8.3 mm
+   1 JUN 23, 2012  175    175     62  MZ                Irrigation         8.4 mm
    1 JUN 25, 2012  177    177     64  MZ                Irrigation         8.4 mm
    1 JUN 26, 2012  178    178     65  MZ                Irrigation         6.0 mm
    1 JUN 27, 2012  179    179     66  MZ  04 Beg Gr Fil

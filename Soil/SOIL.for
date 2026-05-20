@@ -209,6 +209,8 @@ C=====================================================================
       !CALL Biochar_Daily(CONTROL, SOILPROP)
 
       IF (DYNAMIC == SEASINIT) THEN
+!       Initialize Biochar
+        CALL Biochar_Init(CONTROL)
 !       Soil water balance -- call last for initialization
         CALL WATBAL(CONTROL, ISWITCH, 
      &    ES, IRRAMT, SOILPROP, SWDELTX,                  !Input
@@ -217,6 +219,9 @@ C=====================================================================
      &    DRAIN, DRN, SNOW, SW, SWDELTS,                  !Output
      &    TDFC, TDLNO, UPFLOW, WINF)                      !Output
       ENDIF
+
+!     Apply Biochar Effects (After nutrient modules to add to available pools)
+      CALL Biochar_Daily(CONTROL, SOILPROP, NH4, NO3, SPi_AVAIL)
 
 !***********************************************************************
 

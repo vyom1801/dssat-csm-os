@@ -1,3 +1,5 @@
+@MODEL
+2
 ! Parameters
 @PARAM CNRF_BC Opt_bc  P_FOM   P_E   P_F   CEC_MAX K_CEC  Kads  Kdes  QLL   KDUL  KBD  EF_BC FR_BCBIOM CN_BIOM CN_HUM UpH LpH P1pH
        0.693   25.0    0.1     0.0   0.0   100.0   0.0001 0.006 0.006 0.0   -0.15 -0.1  0.4   0.05      8.0     11.0   8.3 3.5 10.0

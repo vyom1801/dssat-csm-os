@@ -555,6 +555,7 @@ set(
         "Plant/SUBSTOR-Potato/PT_THTIME.for"
         "Soil/Biochar/Biochar_mod.f90"
         "Soil/SOIL.for"
+        "Soil/Biochar/Biochar_mod.f90"
         "Soil/CENTURY_OrganicMatter/CENTURY.for"
         "Soil/CENTURY_OrganicMatter/CE_RATIO_C.for"
         "Soil/CENTURY_OrganicMatter/DECRAT_C.for"
@@ -662,6 +663,23 @@ ADD_EXECUTABLE(${EXECUTABLE_NAME} ${source_list})
 ADD_EXECUTABLE(Test_Biochar_New 
     "Soil/Biochar/Test_Biochar_New.f90" 
     "Soil/Biochar/Biochar_mod.f90" 
+    "Utilities/ModuleDefs.for"
+    "Utilities/Warning.for"
+    "Utilities/UTILS.for"
+    "Utilities/CsvOuts/csvlinklist.f90"
+    "Utilities/CsvOuts/csvoutput.f90"
+    "InputModule/OPHEAD.for"
+    "Utilities/ERROR.for"
+    "Utilities/DATES.for"
+    "Utilities/CSMVersion.for"
+    "Utilities/OSDefsLINUX.for"
+    "Utilities/READS.for"
+    "Utilities/Info.for"
+)
+
+ADD_EXECUTABLE(Test_Biochar_Mechanistic 
+    "Soil/Biochar/Test_Biochar_Mechanistic.f90"
+    "Soil/Biochar/Biochar_mod.f90"
     "Utilities/ModuleDefs.for"
     "Utilities/Warning.for"
     "Utilities/UTILS.for"

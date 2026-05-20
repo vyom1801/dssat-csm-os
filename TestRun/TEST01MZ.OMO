@@ -1,6 +1,6 @@
 *MANAGEMENT OPERATIONS DAILY OUTPUT FILE
 
-*DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_soil  MAR 06, 2026 13:55:27
+*DSSAT Cropping System Model Ver. 4.8.5.041 -feat/integrate_multi_biochar_models  MAY 20, 2026 09:25:40
 
 *RUN   1        : AG9010 - Rainfed          MZCER048 TEST01MZ    1
  MODEL          : MZCER048 - Maize
@@ -23,6 +23,6 @@
  2012 140   140    27    31   258     0     0     0     0     0
  2012 154   154    41    40   326     0     0     0     0     0
  2012 168   168    55    46   371     0     0     0     0     0
- 2012 182   182    69    53   427     0     0     0     0     0
- 2012 196   196    83    56   453     0     0     0     0     0
+ 2012 182   182    69    53   428     0     0     0     0     0
+ 2012 196   196    83    56   454     0     0     0     0     0
  2012 210   210    97    61   495     0     0     0     0     0
