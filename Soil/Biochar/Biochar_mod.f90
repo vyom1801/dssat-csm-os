@@ -64,10 +64,10 @@ MODULE Biochar_mod
       LOGICAL :: Initialized = .FALSE.
 
       ! Parameters (Dominic)
-      REAL, PARAMETER :: k_labile = 0.05
-      REAL, PARAMETER :: k_ox_max = 0.02
-      REAL, PARAMETER :: k_weather = 0.1
-      REAL, PARAMETER :: k_nitrif = 0.08
+      REAL :: k_labile = 0.05
+      REAL :: k_ox_max = 0.02
+      REAL :: k_weather = 0.1
+      REAL :: k_nitrif = 0.08
       REAL, PARAMETER :: k_volat = 0.15
       REAL, PARAMETER :: CUE_max = 0.6
       REAL, PARAMETER :: CUE_min = 0.2
@@ -75,10 +75,10 @@ MODULE Biochar_mod
       REAL, PARAMETER :: Dominic_CEC_max = 50.0 ! Renamed to avoid clash
       REAL, PARAMETER :: pKa_NH4 = 9.24
       REAL, PARAMETER :: pKa_carboxyl = 4.5
-      REAL, PARAMETER :: f_poly = 0.6
-      REAL, PARAMETER :: k_bridge_eff = 0.8
-      REAL, PARAMETER :: K_L_NO3 = 0.2
-      REAL, PARAMETER :: K_L_PO4 = 2.5
+      REAL :: f_poly = 0.6
+      REAL :: k_bridge_eff = 0.8
+      REAL :: K_L_NO3 = 0.2
+      REAL :: K_L_PO4 = 2.5
 
       ! Interface for Biochar_Daily to support overloading
       INTERFACE Biochar_Daily
@@ -95,6 +95,7 @@ MODULE Biochar_mod
         CHARACTER(LEN=120) :: LINE
         LOGICAL :: FEXIST
         
+        WRITE(*,*) "DEBUG: Biochar_Init started"
         IF (Initialized) RETURN
         
         NumApps = 0
@@ -119,8 +120,20 @@ MODULE Biochar_mod
               END IF
 
               IF (LINE(1:6) == '@PARAM') THEN
-                 READ(LUN_INP, *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, P_FOM, P_E, P_F, CEC_MAX, K_CEC, &
-                      Kads, Kdes, QLL, KDUL, KBD, EF_BC, FR_BCBIOM, CN_BIOM, CN_HUM, UpH, LpH, P1_pH
+                 IF (BC_Model_Type == 1) THEN
+                    READ(LUN_INP, *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, P_FOM, P_E, P_F, CEC_MAX, K_CEC, &
+                         Kads, Kdes, QLL, KDUL, KBD, EF_BC, FR_BCBIOM, CN_BIOM, CN_HUM, UpH, LpH, P1_pH
+                 END IF
+                 CYCLE
+              END IF
+
+              IF (LINE(1:7) == '@DOMPAR') THEN
+                 IF (BC_Model_Type == 2) THEN
+                    READ(LUN_INP, *, IOSTAT=ERRNUM) k_labile, k_ox_max, k_weather, k_nitrif, &
+                         f_poly, k_bridge_eff, K_L_NO3, K_L_PO4
+                 ELSE
+                    READ(LUN_INP, '(A)', IOSTAT=ERRNUM) LINE ! Skip data line if not Model 2
+                 END IF
                  CYCLE
               END IF
 

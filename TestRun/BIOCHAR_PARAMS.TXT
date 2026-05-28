@@ -1,0 +1,70 @@
+!=======================================================================
+! BIOCHAR MODEL PARAMETERS REFERENCE (Action-Oriented)
+! This file lists parameters for both biochar models in DSSAT,
+! categorized by how they are practically used in calibration.
+! Values are listed along with their status and typical min/max ranges.
+!=======================================================================
+
+!-----------------------------------------------------------------------
+! CATEGORY 1: SITE-SPECIFIC CALIBRATION PARAMETERS
+! Tune these to fit field observations at a specific location.
+! (Includes parameters that are empirical and unvalidated for this site)
+!-----------------------------------------------------------------------
+! Model 1 (Sotirios):
+! QLL         = [Varies] (Default: 0.0)   [Min: 0.0, Max: 0.5]   ! Calibration factor for LL change
+! KDUL        = [Varies] (Default: -0.15) [Min: -0.5, Max: 0.5]  ! Calibration factor for DUL change
+! KBD         = [Varies] (Default: -0.1)  [Min: -0.5, Max: 0.0]  ! Calibration factor for BD change
+! UpH         = [Varies] (Default: 8.3)   [Min: 6.0, Max: 9.5]   ! Upper pH limit for liming
+! LpH         = [Varies] (Default: 3.5)   [Min: 2.0, Max: 6.0]   ! Lower pH limit for liming
+! P1_pH       = [Varies] (Default: 10.0)  [Min: 1.0, Max: 20.0]  ! Magnitude factor for pH change
+! Opt_bc      = [Model Default] (Default: 25.0) [Min: 5.0, Max: 50.0] ! Optimum biochar-to-mineral-N ratio
+! CNRF_BC     = [Model Default] (Default: 0.693) [Min: 0.1, Max: 2.0] ! Critical N ratio for decay
+! EF_BC       = [Model Default] (Default: 0.4)   [Min: 0.1, Max: 0.8] ! Efficiency of biochar C use
+! FR_BCBIOM   = [Model Default] (Default: 0.05)  [Min: 0.01, Max: 0.2]! Fraction to microbial biomass
+
+! Model 2 (Dominic):
+! k_weather   = [Model Default] (Default: 0.1)  [Min: 0.01, Max: 1.0]  ! Weathering rate constant
+! k_nitrif    = [Model Default] (Default: 0.08) [Min: 0.01, Max: 0.5]  ! Nitrification rate constant
+! k_labile    = [Model Default] (Default: 0.05)  [Min: 0.001, Max: 0.2] ! Labile decay rate
+! k_ox_max    = [Model Default] (Default: 0.02)  [Min: 0.001, Max: 0.1] ! Max oxidation rate
+! f_poly      = [Model Default] (Default: 0.6)   [Min: 0.1, Max: 1.0]   ! Fraction for bridging
+! k_bridge_eff= [Model Default] (Default: 0.8)   [Min: 0.1, Max: 1.0]   ! Bridging efficiency
+! K_L_NO3     = [Model Default] (Default: 0.2)   [Min: 0.01, Max: 2.0]  ! Langmuir NO3 affinity
+! K_L_PO4     = [Model Default] (Default: 2.5)   [Min: 0.1, Max: 10.0]  ! Langmuir PO4 affinity
+
+!-----------------------------------------------------------------------
+! CATEGORY 2: BIOCHAR MATERIAL INPUTS
+! Set these based on the properties of your specific biochar (lab data).
+! (Depends entirely on biochar type)
+!-----------------------------------------------------------------------
+! Model 1 (Sotirios):
+! FLabile     = [Varies] (Default: 0.10)  [Min: 0.01, Max: 0.5]  ! Fraction of biochar that is labile
+! FCarbon     = [Varies] (Default: 0.40)  [Min: 0.30, Max: 0.95] ! Total carbon fraction of biochar
+! MRT1        = [Varies] (Default: 0.5)   [Min: 0.1, Max: 5.0]   ! Mean Residence Time of labile pool (years)
+! MRT2        = [Varies] (Default: 200.0) [Min: 10.0, Max: 1000.0]! Mean Residence Time of recalcitrant pool (years)
+! CN_BC       = [Varies] (Default: 15.0)  [Min: 10.0, Max: 500.0]! C:N ratio of biochar
+! CEC_INIT    = [Varies] (Default: 187.0) [Min: 10.0, Max: 300.0]! Initial CEC of biochar (cmol/kg)
+! BCLV        = [Varies] (Default: 50.0)  [Min: 0.0, Max: 100.0] ! Biochar Liming Value
+
+! Model 2 (Dominic):
+! FLabile     = [Varies] (Default: 0.10)  [Min: 0.01, Max: 0.5]
+! FCarbon     = [Varies] (Default: 0.40)  [Min: 0.30, Max: 0.95]
+! Init_M_BC_Factor = [Model Default] (Default: 50.0) [Min: 10.0, Max: 100.0]
+! Init_CEC_pot_Factor = [Model Default] (Default: 0.5) [Min: 0.1, Max: 5.0]
+
+!-----------------------------------------------------------------------
+! CATEGORY 3: MODEL & PROCESS CONSTANTS
+! Leave these at defaults unless you are doing advanced research.
+!-----------------------------------------------------------------------
+! Model 1 (Sotirios):
+! CN_BIOM     = 8.0      ! [Standard] C:N ratio of soil microbial biomass
+! CN_HUM      = 11.0     ! [Standard] C:N ratio of soil humus
+
+! Model 2 (Dominic):
+! k_volat     = [Model Default] (Default: 0.15) [Min: 0.01, Max: 0.5]
+! CUE_max     = [Model Default] (Default: 0.6)  [Min: 0.4, Max: 0.8]
+! CUE_min     = [Model Default] (Default: 0.2)  [Min: 0.05, Max: 0.4]
+! CN_mic      = 8.0      ! [Standard] C:N ratio of microbial biomass
+! Dominic_CEC_max = [Model Default] (Default: 50.0) [Min: 10.0, Max: 200.0]
+! pKa_NH4     = 9.24     ! [Standard] Exact thermodynamic pKa for NH4/NH3
+! pKa_carboxyl= 4.5      ! [Standard] Standard assumed pKa for carboxyl groups

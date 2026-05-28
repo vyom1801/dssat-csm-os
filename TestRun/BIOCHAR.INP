@@ -1,8 +1,11 @@
 @MODEL
-2
+1
 ! Parameters
 @PARAM CNRF_BC Opt_bc  P_FOM   P_E   P_F   CEC_MAX K_CEC  Kads  Kdes  QLL   KDUL  KBD  EF_BC FR_BCBIOM CN_BIOM CN_HUM UpH LpH P1pH
        0.693   25.0    0.1     0.0   0.0   100.0   0.0001 0.006 0.006 0.0   -0.15 -0.1  0.4   0.05      8.0     11.0   8.3 3.5 10.0
+
+@DOMPAR k_labile k_ox_max k_weather k_nitrif f_poly k_bridge_eff K_L_NO3 K_L_PO4
+       0.05      0.02      0.1       0.08     0.6    0.8          0.2     2.5
 
 ! Applications
 ! AppDate Amount Depth FLoss FCarbon FLabile MRT1 MRT2 CN_BC CEC_INIT BCLV
