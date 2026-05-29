@@ -276,10 +276,10 @@ C=======================================================================
 !***********************************************************************
       ELSEIF (DYNAMIC .EQ. RATE) THEN
 !-----------------------------------------------------------------------
-      PRINT *, '--------------------------------------------------------------------------------'
-      PRINT *, 'DEBUG: WATBAL - Daily Rate Calculation Start for Day: ', YRDOY
-      PRINT *, '  Inputs: Rain (mm)=', RAIN, ', Irrigation (mm)=', IRRAMT, ', Snow (mm)=', SNOW
-      PRINT *, '  Inputs: Flood depth (mm)=', FLOOD, ', Soil Evaporation (mm/d)=', ES
+!      PRINT *, '--------------------------------------------------------------------------------'
+!      PRINT *, 'DEBUG: WATBAL - Daily Rate Calculation Start for Day: ', YRDOY
+!      PRINT *, '  Inputs: Rain (mm)=', RAIN, ', Irrigation (mm)=', IRRAMT, ', Snow (mm)=', SNOW
+!      PRINT *, '  Inputs: Flood depth (mm)=', FLOOD, ', Soil Evaporation (mm/d)=', ES
 
       !Convert snowfall into precip ( = rain)
       !This is needed for winter crops even if water not simulated.
@@ -472,12 +472,12 @@ C       extraction (based on yesterday's values) for each soil layer.
 !-----------------------------------------------------------------------
       IF (ISWWAT .EQ. 'Y') THEN
         
-        PRINT *, 'DEBUG: WATBAL - Daily Integration Start for Day: ', YRDOY
-        PRINT *, '  Water Balance Components:'
-        PRINT *, '    Infiltration (mm)=', FLOODWAT % INFILT, ', Runoff (mm)=', FLOODWAT % RUNOFF
-        PRINT *, '    Profile Drainage (mm)=', DRAIN, ', Upward Flow from below (cm/d)=', UPFLOW(1)
-        PRINT *, '    Soil Evaporation (mm/d)=', ES, ', Snow melt/accumulation (mm)=', SNOW
-        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - Before Integration:', SW(1)
+!        PRINT *, 'DEBUG: WATBAL - Daily Integration Start for Day: ', YRDOY
+!        PRINT *, '  Water Balance Components:'
+!        PRINT *, '    Infiltration (mm)=', FLOODWAT % INFILT, ', Runoff (mm)=', FLOODWAT % RUNOFF
+!        PRINT *, '    Profile Drainage (mm)=', DRAIN, ', Upward Flow from below (cm/d)=', UPFLOW(1)
+!        PRINT *, '    Soil Evaporation (mm/d)=', ES, ', Snow melt/accumulation (mm)=', SNOW
+!        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - Before Integration:', SW(1)
 
 
 !       CALL SUMSW(NLAYR, DLAYR, SW, SWTOT1)
@@ -522,9 +522,9 @@ C       extraction (based on yesterday's values) for each soil layer.
           IF (abs(NewSW) < 1.e-4) NewSW = 0.0
           SW(L) = NewSW
         ENDDO
-        PRINT *, '  Actual Water Uptake by Roots (mm):', -SWDELTX_TOT
-        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - After Integration: ', SW(1)
-        PRINT *, '--------------------------------------------------------------------------------'
+!        PRINT *, '  Actual Water Uptake by Roots (mm):', -SWDELTX_TOT
+!        PRINT *, '  Soil Water Content Layer 1 (cm3/cm3) - After Integration: ', SW(1)
+!        PRINT *, '--------------------------------------------------------------------------------'
 
         !Update mulch water content
 !       IF (INDEX('RSN',MEINF) .LE. 0) THEN

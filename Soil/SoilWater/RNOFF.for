@@ -73,7 +73,7 @@ C-----------------------------------------------------------------------
 !***********************************************************************
 !     DAILY RATE CALCULATIONS
 !***********************************************************************
-      PRINT *, 'DEBUG: RNOFF - Runoff Calculation Start: Water Available (mm)=', WATAVL, ', Curve Number=', CN
+!      PRINT *, 'DEBUG: RNOFF - Runoff Calculation Start: Water Available (mm)=', WATAVL, ', Curve Number=', CN
 
 !     ----------------------------------------------
 !     Soil storage 
@@ -117,7 +117,7 @@ C-----------------------------------------------------------------------
           RUNOFF = WATAVL * PMFRACTION + RUNOFF * (1 - PMFRACTION)
       ENDIF
 
-      PRINT *, 'DEBUG: RNOFF - Runoff Calculation End: Calculated Runoff (mm)=', RUNOFF
+!      PRINT *, 'DEBUG: RNOFF - Runoff Calculation End: Calculated Runoff (mm)=', RUNOFF
 
 !!     Temporary
 !      CUMRO = CUMRO + RUNOFF
