@@ -91,7 +91,7 @@ MODULE Biochar_mod
 !=======================================================================
       SUBROUTINE Biochar_Init(CONTROL)
         TYPE(ControlType), INTENT(IN) :: CONTROL
-        INTEGER :: ERRNUM, LUN_INP
+        INTEGER :: ERRNUM, LUN_INP, iApp
         CHARACTER(LEN=120) :: LINE
         LOGICAL :: FEXIST
         
@@ -150,6 +150,9 @@ MODULE Biochar_mod
            END DO
            CLOSE(LUN_INP)
            WRITE(*,*) "BIOCHAR: Loaded ", NumApps, " applications."
+            DO iApp = 1, NumApps
+               WRITE(*,*) "DEBUG INIT: App ", iApp, " Date=", BC_Apps(iApp)%AppDate, " Amount=", BC_Apps(iApp)%Amount
+            ENDDO
         ELSE
            WRITE(*,*) "BIOCHAR: BIOCHAR.INP NOT FOUND. USING DEFAULTS."
         ENDIF
@@ -337,7 +340,8 @@ MODULE Biochar_mod
         REAL, INTENT(IN) :: Labile, Recalc, Depth
         TYPE(SoilType), INTENT(IN) :: SOILPROP
         INTEGER :: L
-        REAL :: LDepth = 0.0, Thick, Dist, Frac
+        REAL :: LDepth, Thick, Dist, Frac
+        LDepth = 0.0
         DO L = 1, SOILPROP%NLAYR
            Thick = SOILPROP%DLAYR(L)
            Dist = MIN(LDepth + Thick, Depth) - LDepth
@@ -354,13 +358,17 @@ MODULE Biochar_mod
         REAL, INTENT(IN) :: Labile, Recalc, M_BC, CEC_pot, Depth
         TYPE(SoilType), INTENT(IN) :: SOILPROP
         INTEGER :: L
-        REAL :: LDepth = 0.0, Thick, Dist, Frac
+        REAL :: LDepth, Thick, Dist, Frac
+        LDepth = 0.0
+        WRITE(*,*) "DEBUG DISTRIBUTE: NLAYR=", SOILPROP%NLAYR, " Depth=", Depth, " Labile=", Labile, " Recalc=", Recalc
         DO L = 1, SOILPROP%NLAYR
            Thick = SOILPROP%DLAYR(L)
            Dist = MIN(LDepth + Thick, Depth) - LDepth
+           WRITE(*,*) "DEBUG DIST L=", L, " Dist=", Dist
            IF (Dist > 0) THEN
               Frac = Dist / Depth
               BCState%BC_L(L) = BCState%BC_L(L) + Labile * Frac
+              WRITE(*,*) "DEBUG DIST L=", L, " Frac=", Frac, " BC_L=", BCState%BC_L(L)
               BCState%BC_R(L) = BCState%BC_R(L) + Recalc * Frac
               BCState%M_BC(L) = BCState%M_BC(L) + M_BC * Frac
               BCState%CEC_pot(L) = BCState%CEC_pot(L) + CEC_pot * Frac
@@ -705,7 +713,9 @@ MODULE Biochar_mod
            y(8) = BCState%P_precip(L)
 
            ! Integrate from 0 to 24 hours
+           IF (CONTROL%YRDOY == 2012130 .AND. L == 1) WRITE(*,*) "DEBUG INTEGRATE BEFORE: y(1)=", y(1)
            CALL RK45_Integrate(y, 0.0, 24.0, tol, SOILPROP, L)
+           IF (CONTROL%YRDOY == 2012130 .AND. L == 1) WRITE(*,*) "DEBUG INTEGRATE AFTER: y(1)=", y(1)
            
            ! Unpack state
            BCState%BC_L(L) = y(1)
