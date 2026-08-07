@@ -74,14 +74,16 @@ MODULE Biochar_mod
 
            IF (LINE(1:1) == '@') CYCLE ! Header lines
 
-           NumApps = NumApps + 1
-           IF (NumApps > MaxApp) EXIT
-           READ(LINE, *, IOSTAT=ERRNUM) BC_Apps(NumApps)%AppDate, &
-                BC_Apps(NumApps)%Amount, BC_Apps(NumApps)%Depth, &
-                BC_Apps(NumApps)%FLoss, BC_Apps(NumApps)%FCarbon, &
-                BC_Apps(NumApps)%FLabile, BC_Apps(NumApps)%MRT_Labile, &
-                BC_Apps(NumApps)%MRT_Recalc, BC_Apps(NumApps)%CN_BC, &
-                BC_Apps(NumApps)%CEC_INIT, BC_Apps(NumApps)%BCLV
+           READ(LINE, *, IOSTAT=ERRNUM) BC_Apps(NumApps+1)%AppDate, &
+                BC_Apps(NumApps+1)%Amount, BC_Apps(NumApps+1)%Depth, &
+                BC_Apps(NumApps+1)%FLoss, BC_Apps(NumApps+1)%FCarbon, &
+                BC_Apps(NumApps+1)%FLabile, BC_Apps(NumApps+1)%MRT_Labile, &
+                BC_Apps(NumApps+1)%MRT_Recalc, BC_Apps(NumApps+1)%CN_BC, &
+                BC_Apps(NumApps+1)%CEC_INIT, BC_Apps(NumApps+1)%BCLV
+           IF (ERRNUM == 0 .AND. BC_Apps(NumApps+1)%AppDate > 100000) THEN
+              NumApps = NumApps + 1
+              IF (NumApps >= MaxApp) EXIT
+           END IF
         END DO
         CLOSE(LUN_INP)
         WRITE(*,*) "BIOCHAR: Loaded ", NumApps, " applications."
