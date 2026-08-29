@@ -1,0 +1,28 @@
+*MANAGEMENT OPERATIONS DAILY OUTPUT FILE
+
+*DSSAT Cropping System Model Ver. 4.8.5.041 -sotirios_soil  MAR 06, 2026 13:55:27
+
+*RUN   1        : AG9010 - Rainfed          MZCER048 TEST01MZ    1
+ MODEL          : MZCER048 - Maize
+ EXPERIMENT     : TEST01MZ MZ
+ DATA PATH      :
+ TREATMENT  1   : AG9010 - Rainfed          MZCER048
+  
+
+@YEAR DOY   DAS   DAP  IR#C  IRRC  NAPC  NICM  R#AC RESNC RESPC
+ 2012 001     1     0     1    39     0     0     0     0     0
+ 2012 014    14     0     1    39     0     0     0     0     0
+ 2012 028    28     0     2    45     0     0     0     0     0
+ 2012 042    42     0     2    45     0     0     0     0     0
+ 2012 056    56     0     3    51     0     0     0     0     0
+ 2012 070    70     0     6    72     0     0     0     0     0
+ 2012 084    84     0    10   100     0     0     0     0     0
+ 2012 098    98     0    16   144     0     0     0     0     0
+ 2012 112   112     0    21   183     0     0     0     0     0
+ 2012 126   126    13    24   206     0     0     0     0     0
+ 2012 140   140    27    31   258     0     0     0     0     0
+ 2012 154   154    41    40   326     0     0     0     0     0
+ 2012 168   168    55    46   371     0     0     0     0     0
+ 2012 182   182    69    53   427     0     0     0     0     0
+ 2012 196   196    83    56   453     0     0     0     0     0
+ 2012 210   210    97    61   495     0     0     0     0     0

@@ -50,6 +50,7 @@ C=====================================================================
       USE Biochar_mod
       IMPLICIT NONE
       EXTERNAL SOILDYN, WATBAL, CENTURY, SoilOrg, SoilNi, SoilPi, SoilKi
+
       SAVE
 !-----------------------------------------------------------------------
 !     Interface variables:
@@ -124,10 +125,6 @@ C=====================================================================
       DYNAMIC = CONTROL % DYNAMIC
       MESOM   = ISWITCH % MESOM
 
-      IF (DYNAMIC == SEASINIT .OR. DYNAMIC == RUNINIT) THEN
-         CALL Biochar_Init(CONTROL)
-      ENDIF
-
 !***********************************************************************
 !     Call Soil Dynamics module 
 !      IF (DYNAMIC < OUTPUT) THEN
@@ -135,6 +132,10 @@ C=====================================================================
      &    KTRANS, MULCH, SomLit, SomLitC, SW, TILLVALS,   !Input
      &    WEATHER, XHLAI,                                 !Input
      &    SOILPROP)                                       !Output
+         
+      IF (DYNAMIC == RUNINIT) THEN
+         CALL Biochar_Init(CONTROL)
+      ENDIF
 !      ENDIF
 
       ! Biochar: Update Soil Hydraulic Properties (BD, DUL, LL, SAT)
@@ -203,6 +204,9 @@ C=====================================================================
       CALL SoilKi(CONTROL, ISWITCH, 
      &    FERTDATA, KUptake, SOILPROP, TILLVALS,          !Input
      &    SKi_Avail)                                      !Output
+
+      ! Biochar Simulation
+      !CALL Biochar_Daily(CONTROL, SOILPROP)
 
       IF (DYNAMIC == SEASINIT) THEN
 !       Soil water balance -- call last for initialization

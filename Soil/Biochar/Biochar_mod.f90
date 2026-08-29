@@ -1,725 +1,361 @@
-      MODULE Biochar_mod
+MODULE Biochar_mod
 !=======================================================================
 !  MODULE Biochar_mod
-!  Purpose: Simulate Biochar application and decay in soil.
-!  Tracks biochar pools and partitions decay into CO2, Biomass, and Humic pools.
-!  Calculates N Mineralization/Immobilization fluxes.
+!  Purpose: Integrated Biochar model for DSSAT. 
+!  Includes: Application, Decay (2 pools), N-release/Immobilization,
+!            CEC Aging, pH Liming, and NH4 Adsorption.
 !=======================================================================
       USE ModuleDefs
       USE ModuleData
       IMPLICIT NONE
       SAVE
 
-!     Biochar Application Type
       TYPE BiocharAppType
-        INTEGER :: AppDate       ! Date of application (YrDoy)
-        REAL    :: Amount        ! Amount applied (kg/ha)
-        REAL    :: Depth         ! Depth of application (cm)
-        REAL    :: FLoss         ! Fraction lost during application (0-1)
-        REAL    :: FCarbon       ! Fraction of Carbon (0-1)
-        REAL    :: FLabile       ! Fraction of Labile pool (0-1)
-        REAL    :: MRT_Labile    ! Mean Residence Time Labile (years)
-        REAL    :: MRT_Recalc    ! Mean Residence Time Recalcitrant (years)
-        REAL    :: CN_BC         ! C:N Ratio of Biochar
-        REAL    :: CEC_INIT      ! Initial CEC (cmol/kg biochar)
-        REAL    :: BCLV          ! Biochar Liming Value (cmol/kg biochar)
-        REAL    :: Kads          ! Langmuir Adsorption Coeff (L/mg)
-        REAL    :: Kdes          ! Langmuir Desorption Coeff (L/mg)
-        REAL    :: QLL           ! Quality mod for Lower Limit
-        REAL    :: KDUL          ! Quality mod for DUL
-        REAL    :: KBD           ! Quality mod for Bulk Density
+        INTEGER :: AppDate
+        REAL    :: Amount, Depth, FLoss, FCarbon, FLabile
+        REAL    :: MRT_Labile, MRT_Recalc, CN_BC
+        REAL    :: CEC_INIT, BCLV
       END TYPE BiocharAppType
 
-!     Max number of applications
       INTEGER, PARAMETER :: MaxApp = 20
       TYPE(BiocharAppType) :: BC_Apps(MaxApp)
       INTEGER :: NumApps = 0
-      
-!     Parameters
-      REAL :: CNRF_BC = 0.693 ! C:N Ratio Factor (Archontoulis 2015)
-      REAL :: Opt_bc  = 25.0  ! Optimal C:N 
-      REAL :: EF_BC   = 0.4   ! Carbon retention efficiency (0-1)
-      REAL :: FR_BCBIOM = 0.05 ! Fraction of retained C going to BIOM (0-1)
-      
-      ! Assumed C:N ratios for Soil Organic Matter pools (defaults)
+      LOGICAL :: Applied(MaxApp) = .FALSE.
 
-      REAL :: CN_BIOM = 8.0
-      REAL :: CN_HUM  = 11.0
-      
-      ! CEC Parameters
-      REAL :: CEC_MAX = 100.0 ! Maximum CEC after aging (cmol/kg)
-      REAL :: K_CEC   = 0.001 ! CEC aging rate constant (1/day)
-      
-      ! pH Parameters
-      REAL :: BCLV_Default = 50.0 ! Default Liming Value if not specified
-      REAL :: UpH     = 8.3
-      REAL :: LpH     = 3.5
-      REAL :: P1_pH   = 10.0
-      
-      ! NH4 Adsorption Parameters
-      REAL :: Kads_Default = 0.006
-      REAL :: Kdes_Default = 0.006
-      
-!     Priming Parameters (Archontoulis et al., 2015)
-      REAL :: P_FOM = 0.0   ! Positive priming on FOM decomposition rate
-      REAL :: P_E   = 0.0   ! Negative priming on Carbon Efficiency
-      REAL :: P_F   = 0.0   ! Negative priming on FOM->BIOM transfer
+      ! Global Parameters
+      REAL :: CNRF_BC = 0.693, Opt_bc = 25.0, EF_BC = 0.4, FR_BCBIOM = 0.05
+      REAL :: CN_BIOM = 8.0, CN_HUM = 11.0, CEC_MAX = 100.0, K_CEC = 0.001
+      REAL :: UpH = 8.3, LpH = 3.5, P1_pH = 10.0
+      REAL :: P_FOM = 0.0, P_E = 0.0, P_F = 0.0
+      REAL :: Kads = 0.006, Kdes = 0.006, QLL = 0.0, KDUL = -0.15, KBD = -0.1
 
-!     State Variables
-      REAL, DIMENSION(NL) :: dlt_nbc_released_yesterday
-      REAL, DIMENSION(NL) :: BC_Labile   ! Labile Biochar C (kg/ha)
-      REAL, DIMENSION(NL) :: BC_Recalc   ! Recalcitrant Biochar C (kg/ha)
-      REAL, DIMENSION(NL) :: BC_NH4_Ads  ! Adsorbed NH4 (kg N/ha)
-      REAL, DIMENSION(NL) :: Prev_BC_Mass_g_g ! Previous day Biochar mass fraction (g/g soil)
+      ! State Variables
+      REAL, DIMENSION(NL) :: BC_Labile = 0.0, BC_Recalc = 0.0, BC_NH4_Ads = 0.0
+      REAL, DIMENSION(NL) :: NativeCEC = 0.0, Prev_BC_Mass_g_g = 0.0
+      REAL, DIMENSION(NL) :: NativeBD = 0.0, NativeLL = 0.0, NativeDUL = 0.0, NativeSAT = 0.0
+      REAL, DIMENSION(NL) :: dlt_nbc_rel_prev = 0.0
       
-!     Flux Variables (Daily)
-      REAL :: Daily_CO2_Gross   ! Total daily CO2 emission from Biochar (kg C/ha/d)
-      REAL :: Daily_Biom_Gross  ! Total daily flux to Biomass (kg C/ha/d)
-      REAL :: Daily_Hum_Gross   ! Total daily flux to Humic (kg C/ha/d)
-      REAL :: Daily_N_Net       ! Net N mineralization (+)/immobilization (-) (kg N/ha/d)
+      ! Daily Fluxes
+      REAL :: Daily_CO2_Gross, Daily_Biom_Gross, Daily_Hum_Gross, Daily_N_Net
 
-!     Output file unit
-      INTEGER :: LUN_BC
-      LOGICAL :: FirstOutput = .TRUE.
-      LOGICAL :: FirstRun = .TRUE.
+      INTEGER :: LUN_BC = 0
+      LOGICAL :: FirstOutput = .TRUE., FirstRun_Props = .TRUE.
 
       CONTAINS
 
 !=======================================================================
       SUBROUTINE Biochar_Init(CONTROL)
         TYPE(ControlType), INTENT(IN) :: CONTROL
-        INTEGER :: ERRNUM, LUN
+        INTEGER :: ERRNUM, LUN_INP
         CHARACTER(LEN=120) :: LINE
         LOGICAL :: FEXIST
-        
-        ! Initialize State
-        dlt_nbc_released_yesterday = 0.0
-        BC_Labile = 0.0
-        BC_Recalc = 0.0
-        BC_NH4_Ads = 0.0
-        Prev_BC_Mass_g_g = 0.0
         NumApps = 0
-        CNRF_BC = 0.693
-        Opt_bc  = 25.0
-        EF_BC   = 0.4
-        FR_BCBIOM = 0.05
-        CN_BIOM = 8.0
-        CN_HUM  = 11.0
-        P_FOM   = 0.0
-        P_E     = 0.0
-        P_F     = 0.0
-        
-        Daily_CO2_Gross = 0.0
-        Daily_Biom_Gross = 0.0
-        Daily_Hum_Gross = 0.0
-        Daily_N_Net = 0.0
+        Applied = .FALSE.
+        BC_Labile = 0.0; BC_Recalc = 0.0; BC_NH4_Ads = 0.0
 
-        ! Open and Read BIOCHAR.INP if it exists
         INQUIRE(FILE='BIOCHAR.INP', EXIST=FEXIST)
-        IF (FEXIST) THEN
-          OPEN(NEWUNIT=LUN, FILE='BIOCHAR.INP', STATUS='OLD', &
-               ACTION='READ', IOSTAT=ERRNUM)
-          IF (ERRNUM == 0) THEN
-            DO WHILE (.TRUE.)
-              READ(LUN, '(A)', IOSTAT=ERRNUM) LINE
-              IF (ERRNUM /= 0) EXIT
-              LINE = ADJUSTL(LINE)
-              IF (LINE(1:1) == '!' .OR. TRIM(LINE) == '') CYCLE
+        IF (.NOT. FEXIST) THEN
+           WRITE(*,*) "BIOCHAR: BIOCHAR.INP NOT FOUND. SKIPPING."
+           RETURN
+        ENDIF
 
+        OPEN(NEWUNIT=LUN_INP, FILE='BIOCHAR.INP', STATUS='OLD', ACTION='READ')
+        DO WHILE (.TRUE.)
+           READ(LUN_INP, '(A)', IOSTAT=ERRNUM) LINE
+           IF (ERRNUM /= 0) EXIT
+           LINE = ADJUSTL(LINE)
+           IF (LINE(1:1) == '!' .OR. LINE == '') CYCLE
+           
+           IF (LINE(1:6) == '@PARAM') THEN
+              READ(LUN_INP, *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, P_FOM, P_E, P_F, CEC_MAX, K_CEC, &
+                   Kads, Kdes, QLL, KDUL, KBD, EF_BC, FR_BCBIOM, CN_BIOM, CN_HUM, UpH, LpH, P1_pH
+              CYCLE
+           END IF
 
-              
-              IF (LINE(1:6) == '@PARAM') THEN
-                 READ(LINE(7:), *, IOSTAT=ERRNUM) CNRF_BC, Opt_bc, &
-                      P_FOM, P_E, P_F, CEC_MAX, K_CEC
-                 CYCLE
-              END IF
-              
-              ! Expected Format: AppDate Amount Depth FLoss FCarbon FLabile MRT1 MRT2 CN_BC CEC_INIT BCLV Kads Kdes QLL KDUL KBD
+           IF (LINE(1:1) == '@') CYCLE ! Header lines
+
+           READ(LINE, *, IOSTAT=ERRNUM) BC_Apps(NumApps+1)%AppDate, &
+                BC_Apps(NumApps+1)%Amount, BC_Apps(NumApps+1)%Depth, &
+                BC_Apps(NumApps+1)%FLoss, BC_Apps(NumApps+1)%FCarbon, &
+                BC_Apps(NumApps+1)%FLabile, BC_Apps(NumApps+1)%MRT_Labile, &
+                BC_Apps(NumApps+1)%MRT_Recalc, BC_Apps(NumApps+1)%CN_BC, &
+                BC_Apps(NumApps+1)%CEC_INIT, BC_Apps(NumApps+1)%BCLV
+           IF (ERRNUM == 0 .AND. BC_Apps(NumApps+1)%AppDate > 100000) THEN
               NumApps = NumApps + 1
-              IF (NumApps > MaxApp) EXIT
-              
-              READ(LINE, *, IOSTAT=ERRNUM) BC_Apps(NumApps)%AppDate, &
-                  BC_Apps(NumApps)%Amount, BC_Apps(NumApps)%Depth, &
-                  BC_Apps(NumApps)%FLoss, BC_Apps(NumApps)%FCarbon, &
-                  BC_Apps(NumApps)%FLabile, BC_Apps(NumApps)%MRT_Labile,&
-                  BC_Apps(NumApps)%MRT_Recalc, BC_Apps(NumApps)%CN_BC, &
-                  BC_Apps(NumApps)%CEC_INIT, BC_Apps(NumApps)%BCLV, &
-                  BC_Apps(NumApps)%Kads, BC_Apps(NumApps)%Kdes, &
-                   BC_Apps(NumApps)%QLL, BC_Apps(NumApps)%KDUL, &
-                   BC_Apps(NumApps)%KBD
-              
-               IF (ERRNUM /= 0) THEN
-                   NumApps = NumApps - 1
-                   CYCLE
-               END IF
-
-             ! Default Kads/Kdes if missing
-             IF (BC_Apps(NumApps)%Kads < 1.E-9) BC_Apps(NumApps)%Kads = Kads_Default
-             IF (BC_Apps(NumApps)%Kdes < 1.E-9) BC_Apps(NumApps)%Kdes = Kdes_Default
-
-            END DO
-            CLOSE(LUN)
-          END IF
-        END IF
-        
-        ! Initialize Output
-        CALL GetLun('BIOCHAR.OUT', LUN_BC)
-        OPEN(UNIT=LUN_BC, FILE='BIOCHAR.OUT', STATUS='REPLACE')
-        WRITE(LUN_BC, '(A)') '*BIOCHAR SIMULATION OUTPUT'
-        WRITE(LUN_BC, '(A)') '@YEAR DOY   DAS   BC_Labile   BC_Recalc' // &
-                             '      dlt_CO2     dlt_Biom    dlt_Hum     dlt_N_Net       TF     WF     NF'
-        
-        FirstRun = .TRUE.
+              IF (NumApps >= MaxApp) EXIT
+           END IF
+        END DO
+        CLOSE(LUN_INP)
+        WRITE(*,*) "BIOCHAR: Loaded ", NumApps, " applications."
       END SUBROUTINE Biochar_Init
 
 !=======================================================================
-      SUBROUTINE Biochar_Daily(CONTROL, SOILPROP, SW, ST, NH4, NO3, &
-                               IMM, MNR)
+      SUBROUTINE Biochar_Daily(CONTROL, SOILPROP, SW, ST, NH4, NO3, IMM, MNR)
         TYPE(ControlType), INTENT(IN) :: CONTROL
         TYPE(SoilType),    INTENT(INOUT) :: SOILPROP
-        REAL, DIMENSION(NL), INTENT(IN) :: SW, ST, NH4, NO3
+        REAL, DIMENSION(NL), INTENT(IN)  :: SW, ST, NH4, NO3
         REAL, DIMENSION(0:NL, NELEM), INTENT(INOUT) :: IMM, MNR
         
-        INTEGER :: YRDOY, DAS, YEAR, DOY, L, iApp
-        REAL :: DecayRate1, DecayRate2
-        REAL :: dltBC1, dltBC2, dltBC_Total
-        REAL :: dlt_bc_CO2, dlt_bc_biom, dlt_bc_hum
-        REAL :: AppliedLabile, AppliedRecalc
-        REAL :: TotalLabile, TotalRecalc
-        REAL :: TF, WF, NF, MF ! Environmental factors
-        REAL :: Navail, SoilBCL
-        REAL :: Ln2
-        ! N-Balance variables
+        INTEGER :: YRDOY, L, iApp, YEAR, DOY, Age_days
+        INTEGER, EXTERNAL :: TIMDIF
+        REAL :: WF, TF, NF, MF, DecayRate1, DecayRate2, dltBC1, dltBC2, dlt_Total
         REAL :: dlt_nbc_need, dlt_nbc_released, dlt_nbc
+        REAL :: SoilMass, BC_Mass_g_g, CEC_t, MassInLayer
 
-        REAL :: CN_BC_App
-        
-        ! CEC Local Vars
-        REAL :: SoilMass, CurrentCEC_Soil, TotalCEC_Soil
-        REAL :: TotalCEC_BC, TotalMass_BC, TotalMass_BC_InLayer
-        REAL :: WeightedCEC_BC, AvgCEC_BC, CurrentMass_BC
-        REAL :: AppDepth, LayerTop, LayerBottom, Fraction, DistDepth
-        REAL :: MassApplied, MassInLayer, CEC_t
-        INTEGER :: TimeSinceApp, TIMDIF, L2
-        REAL :: Age
-        ! pH Local Vars
-        REAL :: SoilpH, SoilCECBC_Val, Term1, Term2, dpH, AppBCLV
-        
-        ! NH4 Adsorption Local Vars
-        REAL :: NH4_Conc_mgL, NH4_Ads_Target_mgL, NH4_Ads_Target_kgHa
-        REAL :: VolSW_L_Ha, CEC_Ratio
-        REAL :: AppKads, AppKdes, Ads_Diff
-        
-        REAL, DIMENSION(NL) :: NativeCEC ! To store initial soil CEC
-
-        Ln2 = LOG(2.0)
-        Daily_CO2_Gross = 0.0
-        Daily_Biom_Gross = 0.0
-        Daily_Hum_Gross = 0.0
-        Daily_N_Net = 0.0
-
-        YRDOY = CONTROL % YRDOY
-        DAS   = CONTROL % DAS
+        YRDOY = CONTROL%YRDOY
         CALL YR_DOY(YRDOY, YEAR, DOY)
-        
-        ! Initialize NativeCEC on first run
-        IF (FirstRun) THEN
-           NativeCEC = SOILPROP%CEC
-           FirstRun = .FALSE.
-        END IF
-        ! Biochar Daily Simulation
-      
-      ! 1. Check for new applications
-      IF (NumApps > 0) THEN
-         DO iApp = 1, NumApps
-            IF (TIMDIF(BC_Apps(iApp)%AppDate, YRDOY) == 0) THEN
 
-             AppliedLabile = BC_Apps(iApp)%Amount * (1.0 - BC_Apps(iApp)%FLoss) * &
-                             BC_Apps(iApp)%FCarbon * BC_Apps(iApp)%FLabile
-             
-             AppliedRecalc = BC_Apps(iApp)%Amount * (1.0 - BC_Apps(iApp)%FLoss) * &
-                             BC_Apps(iApp)%FCarbon * (1.0 - BC_Apps(iApp)%FLabile)
+        SELECT CASE (CONTROL%DYNAMIC)
+        CASE (INTEGR)
+           ! 1. APPLICATION & LIMING
+           DO iApp = 1, NumApps
+              IF (YRDOY >= BC_Apps(iApp)%AppDate .AND. .NOT. Applied(iApp)) THEN
+                 CALL DistributeBiochar(BC_Apps(iApp)%Amount * (1.0-BC_Apps(iApp)%FLoss) * &
+                      BC_Apps(iApp)%FCarbon * BC_Apps(iApp)%FLabile, &
+                      BC_Apps(iApp)%Amount * (1.0-BC_Apps(iApp)%FLoss) * &
+                      BC_Apps(iApp)%FCarbon * (1.0-BC_Apps(iApp)%FLabile), &
+                      BC_Apps(iApp)%Depth, SOILPROP)
+                 
+                 ! Liming Logic
+                 DO L = 1, SOILPROP%NLAYR
+                    MassInLayer = GetBCMassInLayer(iApp, L, SOILPROP)
+                    SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
+                    IF (SoilMass > 0.0) THEN
+                       BC_Mass_g_g = MassInLayer / SoilMass
+                       IF (SOILPROP%PH(L) > LpH .AND. SOILPROP%PH(L) < UpH) THEN
+                          SOILPROP%PH(L) = SOILPROP%PH(L) + P1_pH * &
+                             (BC_Mass_g_g * MAX(1.0, BC_Apps(iApp)%BCLV) / MAX(1.0, SOILPROP%CEC(L))) * &
+                             ((UpH - SOILPROP%PH(L)) * (SOILPROP%PH(L) - LpH) / (UpH - LpH))
+                       ENDIF
+                    ENDIF
+                 ENDDO
+                  Applied(iApp) = .TRUE.
+               ENDIF
+            ENDDO
 
-             CALL DistributeBiochar(AppliedLabile, AppliedRecalc, BC_Apps(iApp)%Depth, SOILPROP)
-             
-             ! Biochar effects on Soil pH (Eq 12) - Apply ONLY on application day
-             ! Calculate incremental effect of THIS application
-             AppBCLV = BC_Apps(iApp)%BCLV
-             IF (AppBCLV < 1.E-6) AppBCLV = BCLV_Default
-             
-             AppDepth = BC_Apps(iApp)%Depth
-             
-             DO L = 1, SOILPROP%NLAYR
-                ! Calculate Fraction of this App in this Layer
-                LayerTop = 0.0
-                DO L2 = 1, L-1
-                   LayerTop = LayerTop + SOILPROP%DLAYR(L2)
-                END DO
-                LayerBottom = LayerTop + SOILPROP%DLAYR(L)
-                
-                IF (LayerTop < AppDepth) THEN
-                   DistDepth = MIN(LayerBottom, AppDepth) - LayerTop
-                   IF (DistDepth > 0) THEN
-                      Fraction = DistDepth / AppDepth
-                      
-                      ! Mass of THIS application in this layer (kg/ha)
-                      ! used for Massfr in Eq 12
-                      MassApplied = BC_Apps(iApp)%Amount
-                      MassInLayer = MassApplied * Fraction
-                      
-                      ! Soil Mass (kg/ha)
-                      SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
-                      
-                      ! Mass Fraction (g/g) = BC Mass / Soil Mass
-                      ! MassInLayer (kg/ha) / SoilMass (kg/ha) -> g/g
-                      IF (SoilMass > 0.0) THEN
-                          Fraction = MassInLayer / SoilMass
-                          
-                          SoilpH = SOILPROP%PH(L)
-                          SoilCECBC_Val = SOILPROP%CEC(L)
-                          
-                          IF (SoilCECBC_Val > 1.E-4 .AND. (UpH - LpH) > 1.E-4) THEN
-                             Term1 = (Fraction * AppBCLV) / SoilCECBC_Val
-                             
-                             IF (SoilpH > LpH .AND. SoilpH < UpH) THEN
-                                Term2 = ((UpH - SoilpH) * (SoilpH - LpH)) / (UpH - LpH)
-                                dpH = P1_pH * Term1 * Term2
-                                SOILPROP%PH(L) = SoilpH + dpH
-                             END IF
-                          END IF
-                      END IF
-                   END IF
-                END IF
-             END DO
-          END IF
-        END DO
-      END IF
+            ! 1.5 CEC Aging
+            DO L = 1, SOILPROP%NLAYR
+               SOILPROP%CEC(L) = NativeCEC(L)
+            ENDDO
+            DO iApp = 1, NumApps
+               IF (Applied(iApp)) THEN
+                  Age_days = TIMDIF(BC_Apps(iApp)%AppDate, YRDOY)
+                  CEC_t = CEC_MAX - (CEC_MAX - BC_Apps(iApp)%CEC_INIT) * EXP(-K_CEC * REAL(Age_days))
+                  DO L = 1, SOILPROP%NLAYR
+                     MassInLayer = GetBCMassInLayer(iApp, L, SOILPROP)
+                     SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
+                     IF (SoilMass > 0.0) THEN
+                        BC_Mass_g_g = MassInLayer / SoilMass
+                        SOILPROP%CEC(L) = SOILPROP%CEC(L) + (BC_Mass_g_g * CEC_t)
+                     ENDIF
+                  ENDDO
+               ENDIF
+            ENDDO
 
-        ! 2. Decay
-        DO L = 1, SOILPROP%NLAYR
-           IF (SIZE(BC_Apps) > 0 .AND. NumApps > 0) THEN
-              ! --- Environmental Modifiers ---
-              ! WF (Water Factor) - Standard DSSAT SWFAC logic
-              WF = 0.0
-              IF (SW(L) > SOILPROP%LL(L)) THEN
-                 WF = (SW(L) - SOILPROP%LL(L)) / (SOILPROP%DUL(L) - SOILPROP%LL(L))
-                 WF = MIN(1.0, WF)
-              END IF
+            ! 2. DECAY & N-FLUX
+            Daily_CO2_Gross = 0.0; Daily_N_Net = 0.0; Daily_Biom_Gross = 0.0; Daily_Hum_Gross = 0.0
+           DO L = 1, SOILPROP%NLAYR
+              IF (BC_Labile(L) + BC_Recalc(L) < 1.E-6) CYCLE
               
-              ! TF (Temperature Factor) - Lloyd & Taylor
-              TF = 0.0
-              TF = (MAX(0.0, ST(L)) / 32.0) ** 2
-              TF = MIN(1.0, TF)
-              TF = MAX(0.0, TF)
-
-              ! NF (Nitrogen Factor)
-              SoilBCL = BC_Labile(L)
-              Navail = NH4(L) + NO3(L) + dlt_nbc_released_yesterday(L)
-              
+              ! Factors
+              WF = MIN(1.0, MAX(0.0, (SW(L)-SOILPROP%LL(L))/MAX(0.01, SOILPROP%DUL(L)-SOILPROP%LL(L))))
+              TF = MIN(1.0, MAX(0.0, (MAX(0.0, ST(L))/32.0)**2))
               NF = 1.0
-              IF (Navail > 0.001) THEN
-                 IF (Opt_bc > 0.0 .AND. SoilBCL > 1.E-6) THEN
-                    NF = MIN(1.0, EXP(-CNRF_BC * ((SoilBCL/Navail) - Opt_bc)/Opt_bc))
-                 END IF
-              ELSE
-                 IF (SoilBCL > 1.E-6) NF = 0.0
-              END IF
-              
-              ! Combine Factor
+              IF ((NH4(L)+NO3(L)) > 0.01 .AND. Opt_bc > 0.0) THEN
+                 NF = MIN(1.0, EXP(-CNRF_BC * ((BC_Labile(L)/MAX(0.01, NH4(L)+NO3(L))) - Opt_bc)/Opt_bc))
+              ELSEIF (BC_Labile(L) > 1.E-6) THEN
+                 NF = 0.0
+              ENDIF
               MF = WF * TF * NF
-              
-              ! --- Apply Decay ---
-              dltBC1 = 0.0
-              CN_BC_App = BC_Apps(1)%CN_BC
 
-              ! Labile Pool Decay
-              IF (BC_Apps(1)%MRT_Labile > 0. .AND. BC_Labile(L) > 1.E-6) THEN
-                 DecayRate1 = (Ln2 / (BC_Apps(1)%MRT_Labile * 365.0)) * MF
+              ! Labile Decay
+              dltBC1 = 0.0
+              IF (BC_Apps(1)%MRT_Labile > 0.0) THEN
+                 DecayRate1 = (LOG(2.0) / (BC_Apps(1)%MRT_Labile * 365.0)) * MF
                  dltBC1 = BC_Labile(L) * (1.0 - EXP(-DecayRate1))
                  BC_Labile(L) = BC_Labile(L) - dltBC1
-              END IF
-              
-              ! Recalcitrant Pool Decay
-              IF (BC_Apps(1)%MRT_Recalc > 0. .AND. BC_Recalc(L) > 1.E-6) THEN
-                 DecayRate2 = (Ln2 / (BC_Apps(1)%MRT_Recalc * 365.0)) * MF
+              ENDIF
+
+              ! Recalc Decay
+              dltBC2 = 0.0
+              IF (BC_Apps(1)%MRT_Recalc > 0.0) THEN
+                 DecayRate2 = (LOG(2.0) / (BC_Apps(1)%MRT_Recalc * 365.0)) * MF
                  dltBC2 = BC_Recalc(L) * (1.0 - EXP(-DecayRate2))
                  BC_Recalc(L) = BC_Recalc(L) - dltBC2
-              END IF
+              ENDIF
+
+              dlt_Total = dltBC1 + dltBC2
+              Daily_CO2_Gross = Daily_CO2_Gross + dlt_Total * (1.0 - EF_BC)
+              Daily_Biom_Gross = Daily_Biom_Gross + dlt_Total * EF_BC * FR_BCBIOM
+              Daily_Hum_Gross = Daily_Hum_Gross + dlt_Total * EF_BC * (1.0 - FR_BCBIOM)
               
-              dltBC_Total = dltBC1 + dltBC2
-              
-              ! --- Partitioning ---
-              dlt_bc_CO2  = dltBC_Total * (1.0 - EF_BC)
-              dlt_bc_biom = dltBC_Total * EF_BC * FR_BCBIOM
-              dlt_bc_hum  = dltBC_Total * EF_BC * (1.0 - FR_BCBIOM)
-              
-              ! --- N Balance (Mineralization / Immobilization) ---
-              ! Eq 7: N Need
-              dlt_nbc_need = (dlt_bc_biom / CN_BIOM) + (dlt_bc_hum / CN_HUM)
-              
-              ! Eq 8: N Released
-              dlt_nbc_released = 0.0
-              IF (CN_BC_App > 0.0) THEN
-                dlt_nbc_released = dltBC_Total / CN_BC_App
-              END IF
-              
-              ! Eq 9: Net Flux
+              ! N Mineralization/Immobilization
+              dlt_nbc_need = (dlt_Total * EF_BC * FR_BCBIOM / CN_BIOM) + &
+                             (dlt_Total * EF_BC * (1.0 - FR_BCBIOM) / CN_HUM)
+              dlt_nbc_released = dlt_Total / MAX(1.0, BC_Apps(1)%CN_BC)
               dlt_nbc = dlt_nbc_released - dlt_nbc_need
               
-              ! Update IMM/MNR arrays for SoilNi
               IF (dlt_nbc > 0.0) THEN
-                 ! Net Mineralization
                  MNR(L, 1) = MNR(L, 1) + dlt_nbc
               ELSE
-                 ! Net Immobilization
                  IMM(L, 1) = IMM(L, 1) + ABS(dlt_nbc)
-              END IF
-              
-              ! Accumulate Profile Totals
-              Daily_CO2_Gross  = Daily_CO2_Gross + dlt_bc_CO2
-              Daily_Biom_Gross = Daily_Biom_Gross + dlt_bc_biom
-              Daily_Hum_Gross  = Daily_Hum_Gross + dlt_bc_hum
-              Daily_N_Net      = Daily_N_Net + dlt_nbc
-              
-              dlt_nbc_released_yesterday(L) = dlt_nbc_released
+              ENDIF
+              Daily_N_Net = Daily_N_Net + dlt_nbc
+           ENDDO
 
-           END IF
-        END DO
-
-        ! 3. Update Soil CEC (Eq 10 & 11)
-        IF (NumApps > 0) THEN
+        CASE (OUTPUT)
+           IF (FirstOutput) THEN
+              OPEN(NEWUNIT=LUN_BC, FILE='BIOCHAR.OUT', STATUS='REPLACE')
+              WRITE(LUN_BC,'(A)') "! Biochar Parameters"
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.6)') "! CNRF_BC=", CNRF_BC, " Opt_bc=", Opt_bc, " P_FOM=", P_FOM, " K_CEC=", K_CEC
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! Kads=", Kads, " Kdes=", Kdes, " QLL=", QLL, " KDUL=", KDUL
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! KBD=", KBD, " EF_BC=", EF_BC, " FR_BCBIOM=", FR_BCBIOM, " CN_BIOM=", CN_BIOM
+              WRITE(LUN_BC,'(A,F8.3,A,F8.3,A,F8.3,A,F8.3)') "! CN_HUM=", CN_HUM, " UpH=", UpH, " LpH=", LpH, " P1pH=", P1_pH
+              WRITE(LUN_BC,'(A)') "@YEAR DOY DAS   L   BC_Labile   BC_Recalc      Biom_G       Hum_G       N_Net          TF          WF          NF        SLPH        CEC8        SWXM"
+              FirstOutput = .FALSE.
+           ENDIF
            DO L = 1, SOILPROP%NLAYR
-              ! Soil Mass (kg/ha)
-              SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
+              ! Recalculate factors
+              WF = MIN(1.0, MAX(0.0, (SW(L)-SOILPROP%LL(L))/MAX(0.01, SOILPROP%DUL(L)-SOILPROP%LL(L))))
+              TF = MIN(1.0, MAX(0.0, (MAX(0.0, ST(L))/32.0)**2))
+              NF = 1.0
+              IF ((NH4(L)+NO3(L)) > 0.01 .AND. Opt_bc > 0.0) THEN
+                 NF = MIN(1.0, EXP(-CNRF_BC * ((BC_Labile(L)/MAX(0.01, NH4(L)+NO3(L))) - Opt_bc)/Opt_bc))
+              ELSEIF (BC_Labile(L) > 1.E-6) THEN
+                 NF = 0.0
+              ENDIF
               
-              TotalCEC_BC = 0.0
-              TotalMass_BC_InLayer = 0.0
-              WeightedCEC_BC = 0.0
-              
-              IF (BC_Labile(L) + BC_Recalc(L) > 1.E-6) THEN
-                 DO iApp = 1, NumApps
-                    AppDepth = BC_Apps(iApp)%Depth
-                    
-                    ! Calculate Fraction of this App in this Layer
-                    LayerTop = 0.0
-                    DO L2 = 1, L-1
-                       LayerTop = LayerTop + SOILPROP%DLAYR(L2)
-                    END DO
-                    LayerBottom = LayerTop + SOILPROP%DLAYR(L)
-                    
-                    IF (LayerTop < AppDepth) THEN
-                       DistDepth = MIN(LayerBottom, AppDepth) - LayerTop
-                       IF (DistDepth > 0) THEN
-                          Fraction = DistDepth / AppDepth
-                          
-                          ! Mass Applied to this layer (Initial)
-                          MassApplied = BC_Apps(iApp)%Amount
-                          MassInLayer = MassApplied * Fraction
-                          
-                          ! Time Since Application
-                          ! TIMDIF returns Diff in Days. AppDate is YRDOY.
-                          TimeSinceApp = TIMDIF(BC_Apps(iApp)%AppDate, YRDOY)
-                          
-                          IF (TimeSinceApp >= 0) THEN
-                              ! Eq 10: Aging
-                              ! CEC_t = CEC_min + (CEC_max - CEC_min) * (1 - exp(-k * t))
-                              Age = REAL(TimeSinceApp)
-                              CEC_t = BC_Apps(iApp)%CEC_INIT + &
-                                      (CEC_MAX - BC_Apps(iApp)%CEC_INIT) * &
-                                      (1.0 - EXP(-K_CEC * Age))
-                              
-                              WeightedCEC_BC = WeightedCEC_BC + CEC_t * MassInLayer
-                              TotalMass_BC_InLayer = TotalMass_BC_InLayer + MassInLayer
-                          END IF
-                       END IF
-                    END IF
-                 END DO
-                 
-                 IF (TotalMass_BC_InLayer > 0.0) THEN
-                    AvgCEC_BC = WeightedCEC_BC / TotalMass_BC_InLayer
-                    CurrentMass_BC = (BC_Labile(L) + BC_Recalc(L)) / MAX(0.1, BC_Apps(1)%FCarbon)
-                    
-                    TotalCEC_BC = AvgCEC_BC * CurrentMass_BC
-                    
-                    ! Eq 11: Mixing (Mass Weighted)
-                    SOILPROP%CEC(L) = (NativeCEC(L) * SoilMass + TotalCEC_BC) / (SoilMass + CurrentMass_BC)
-                 END IF
-              END IF
-           END DO
-        END IF
-
-        ! 4. Update NH4 Adsorption (Eq 13)
-        DO L = 1, SOILPROP%NLAYR
-           IF (BC_Labile(L) + BC_Recalc(L) > 1.E-6) THEN
-              VolSW_L_Ha = SW(L) * SOILPROP%DLAYR(L) * 10.0 * 10000.0
-              
-              IF (VolSW_L_Ha > 1.0) THEN
-                 ! NH4 Conc (mg/L)
-                 NH4_Conc_mgL = (NH4(L) * 1.0E6) / VolSW_L_Ha
-                 
-                 AppKads = BC_Apps(1)%Kads
-                 AppKdes = BC_Apps(1)%Kdes
-                 
-                 ! Ratio of CECbc / CECsoil (Using Ratio of Current Soil CEC to Native?)
-                 ! Paper implies amplification factor.
-                 IF (NativeCEC(L) > 1.E-6) THEN
-                    CEC_Ratio = SOILPROP%CEC(L) / NativeCEC(L)
-                    
-                    ! Adsorption Potential
-                    Term1 = AppKads * CEC_Ratio
-                    NH4_Ads_Target_mgL = NH4_Conc_mgL * Term1 / (1.0 + Term1)
-                    
-                    NH4_Ads_Target_kgHa = (NH4_Ads_Target_mgL * VolSW_L_Ha) / 1.0E6
-                    
-                    Ads_Diff = NH4_Ads_Target_kgHa - BC_NH4_Ads(L)
-                    
-                    IF (Ads_Diff > 0.0) THEN
-                       ! Adsorption
-                       Ads_Diff = MIN(Ads_Diff, NH4(L))
-                       IMM(L, 1) = IMM(L, 1) + Ads_Diff
-                       BC_NH4_Ads(L) = BC_NH4_Ads(L) + Ads_Diff
-                    ELSEIF (Ads_Diff < 0.0) THEN
-                       ! Desorption (Mineralization)
-                        Term1 = AppKdes * CEC_Ratio
-                        NH4_Ads_Target_mgL = NH4_Conc_mgL * Term1 / (1.0 + Term1)
-                        NH4_Ads_Target_kgHa = (NH4_Ads_Target_mgL * VolSW_L_Ha) / 1.0E6
-                        
-                        Ads_Diff = NH4_Ads_Target_kgHa - BC_NH4_Ads(L)
-                        
-                        IF (Ads_Diff < 0.0) THEN
-                            Ads_Diff = MAX(Ads_Diff, -BC_NH4_Ads(L))
-                            MNR(L, 1) = MNR(L, 1) + ABS(Ads_Diff)
-                            BC_NH4_Ads(L) = BC_NH4_Ads(L) + Ads_Diff
-                        END IF
-                    END IF
-                 END IF
-              END IF
-           END IF
-        END DO
-
-        ! 5. Output
-        TotalLabile = SUM(BC_Labile)
-        TotalRecalc = SUM(BC_Recalc)
-        
-        IF (CONTROL%DYNAMIC == INTEGR .OR. CONTROL%DYNAMIC == OUTPUT) THEN
-           WRITE(LUN_BC, '(I5, 1X, I3.3, 1X, I5, 2(F12.2), 4(F12.4), 3(1X, F6.3))') &
-                 YEAR, DOY, DAS, TotalLabile, TotalRecalc, &
-                 Daily_CO2_Gross, Daily_Biom_Gross, Daily_Hum_Gross, &
-                 Daily_N_Net, TF, WF, NF
-        END IF
-
+              WRITE(LUN_BC, '(I5, I4, I5, I4, 11F12.4)') YEAR, DOY, CONTROL%DAS, L, &
+                    BC_Labile(L), BC_Recalc(L), Daily_Biom_Gross, Daily_Hum_Gross, Daily_N_Net, &
+                    TF, WF, NF, SOILPROP%PH(L), SOILPROP%CEC(L), SW(L)
+           ENDDO
+        END SELECT
       END SUBROUTINE Biochar_Daily
 
 !=======================================================================
+      FUNCTION GetBCMassInLayer(iApp, L, SOILPROP) RESULT(Mass)
+        INTEGER, INTENT(IN) :: iApp, L
+        TYPE(SoilType), INTENT(IN) :: SOILPROP
+        REAL :: Mass, LTop, LBot, Dist, AppD
+        INTEGER :: i
+        LTop = 0.0
+        DO i = 1, L-1; LTop = LTop + SOILPROP%DLAYR(i); ENDDO
+        LBot = LTop + SOILPROP%DLAYR(L)
+        AppD = BC_Apps(iApp)%Depth
+        Dist = MIN(LBot, AppD) - LTop
+        IF (Dist > 0.0) THEN
+           Mass = BC_Apps(iApp)%Amount * (Dist / AppD)
+        ELSE
+           Mass = 0.0
+        ENDIF
+      END FUNCTION GetBCMassInLayer
+
       SUBROUTINE DistributeBiochar(Labile, Recalc, Depth, SOILPROP)
         REAL, INTENT(IN) :: Labile, Recalc, Depth
         TYPE(SoilType), INTENT(IN) :: SOILPROP
         INTEGER :: L
-        REAL :: Thickness, ProfileDepth, LayerDepth
-        REAL :: Fraction
-        REAL :: DistDepth
-
-        ProfileDepth = 0.0
+        REAL :: LDepth = 0.0, Thick, Dist, Frac
         DO L = 1, SOILPROP%NLAYR
-           ProfileDepth = ProfileDepth + SOILPROP%DLAYR(L)
-        END DO
-
-        LayerDepth = 0.0
-        DO L = 1, SOILPROP%NLAYR
-           Thickness = SOILPROP%DLAYR(L)
-           IF (LayerDepth < Depth) THEN
-            DistDepth = MIN(LayerDepth + Thickness, Depth) - LayerDepth
-              IF (DistDepth > 0) THEN
-                 Fraction = DistDepth / Depth
-                 BC_Labile(L) = BC_Labile(L) + Labile * Fraction
-                 BC_Recalc(L) = BC_Recalc(L) + Recalc * Fraction
-              END IF
-           END IF
-           LayerDepth = LayerDepth + Thickness
-        END DO
-      
+           Thick = SOILPROP%DLAYR(L)
+           Dist = MIN(LDepth + Thick, Depth) - LDepth
+           IF (Dist > 0) THEN
+              Frac = Dist / Depth
+              BC_Labile(L) = BC_Labile(L) + Labile * Frac
+              BC_Recalc(L) = BC_Recalc(L) + Recalc * Frac
+           ENDIF
+           LDepth = LDepth + Thick
+        ENDDO
       END SUBROUTINE DistributeBiochar
 
-!=======================================================================
-      SUBROUTINE GetBiocharPriming(Layer, BC_Tot, P_Rate, P_Eff, P_Biom)
-        INTEGER, INTENT(IN) :: Layer
-        REAL, INTENT(OUT)   :: BC_Tot   ! Biochar Total (kg C/ha)
-        REAL, INTENT(OUT)   :: P_Rate   ! Rate Modifier (>= 1.0)
-        REAL, INTENT(OUT)   :: P_Eff    ! Efficiency Modifier (<= 1.0)
-        REAL, INTENT(OUT)   :: P_Biom   ! Partitioning Modifier (<= 1.0)
-        
-        BC_Tot = BC_Labile(Layer) + BC_Recalc(Layer)
-        
-        ! Eq 4: Xbc = X * (1 + PFOM * SoilBC / 10000)
-        P_Rate = 1.0 + P_FOM * (BC_Tot / 10000.0)
-        
-        ! Eq 5: ef_fombc = ef_fom * (1 + Pe * SoilBC / 10000)
-        ! Assuming P_E is positive coefficient for reduction
-        P_Eff  = 1.0 + P_E * (BC_Tot / 10000.0)
-        P_Eff  = MAX(0.0, P_Eff) 
-        
-        ! Eq 6: fr_fom_biom
-        ! Assuming P_F is positive coefficient for reduction
-        P_Biom = 1.0 + P_F * (BC_Tot / 10000.0)
-        P_Biom = MAX(0.0, P_Biom)
-
-      END SUBROUTINE GetBiocharPriming
-
-!=======================================================================
+      !=======================================================================
 !  Biochar_UpdateSoilProps
-!  Updates Soil Hydraulic Properties (BD, LL, DUL, SAT) based on 
-!  Biochar applications using Saxton & Rawls (2006).
+!  Purpose: Adjusts BD, LL, and DUL based on Biochar mass fraction 
+!           using Saxton & Rawls (2006) equations.
 !=======================================================================
       SUBROUTINE Biochar_UpdateSoilProps(SOILPROP)
           TYPE(SoilType), INTENT(INOUT) :: SOILPROP
-          
           INTEGER :: L
-          REAL, DIMENSION(NL) :: BC_Mass_g_g ! Biochar mass fraction (g/g soil)
-          REAL :: Sand, Clay, OrgC_Native, OrgC_Eff
-          REAL :: BD_Nat, LL_Nat, DUL_Nat, SAT_Nat
-          REAL :: BD_BC,  LL_BC,  DUL_BC,  SAT_BC
-          REAL :: SoilMass, BC_Total_kgHa, BC_Total_C_kgHa
-          REAL :: QLL_Avg, KDUL_Avg, KBD_Avg
-          REAL :: Biochar_OM_Eff, Biochar_OM_Prev
-          
-          IF (NumApps == 0 .OR. SUM(BC_Labile) + SUM(BC_Recalc) < 1.E-6) RETURN
-          
-          ! Use weighted average Q parameters if multiple apps?
-          ! For simplicity, use First Application parameters for now
-          QLL_Avg  = BC_Apps(1)%QLL
-          KDUL_Avg = BC_Apps(1)%KDUL
-          KBD_Avg  = BC_Apps(1)%KBD
-          
+          REAL :: BC_Mass_Fraction, SoilMass_kgHa, BC_Total_C
+
+          REAL :: S, C, OM_Nat, OM_New
+          REAL :: BD_New, LL_New, DUL_New, SAT_New
+          REAL :: BD_Old, LL_Old, DUL_Old, SAT_Old
+
+          IF (FirstRun_Props) THEN
+             NativeBD  = SOILPROP%BD
+             NativeLL  = SOILPROP%LL
+             NativeDUL = SOILPROP%DUL
+             NativeSAT = SOILPROP%SAT
+             NativeCEC = SOILPROP%CEC
+             FirstRun_Props = .FALSE.
+          ENDIF
+
+          IF (NumApps == 0) RETURN
+
           DO L = 1, SOILPROP%NLAYR
-             ! 1. Calculate Biochar Fraction
+              BC_Total_C = BC_Labile(L) + BC_Recalc(L)
+              IF (BC_Total_C < 1.E-4) CYCLE
 
-             SoilMass = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0 ! kg/ha
-             BC_Total_C_kgHa = BC_Labile(L) + BC_Recalc(L)
-             
-             ! Estimate Total Mass of Biochar
-             ! Mass = C / FCarbon. Use Avg FCarbon.
-             IF (BC_Apps(1)%FCarbon > 0.0) THEN
-                 BC_Total_kgHa = BC_Total_C_kgHa / BC_Apps(1)%FCarbon
-             ELSE
-                 BC_Total_kgHa = BC_Total_C_kgHa / 0.7 ! Default
-             END IF
-             
-             IF (SoilMass > 1.0) THEN
-                 BC_Mass_g_g(L) = BC_Total_kgHa / SoilMass
-                 
-                 ! 2. Get Native Properties
-                  Sand = SOILPROP%SAND(L) / 100.0
-                  Clay = SOILPROP%CLAY(L) / 100.0
-                  OrgC_Native = SOILPROP%OC(L) / 100.0
+              ! 1. Calculate Biochar Mass Fraction (g biochar / g soil)
+              SoilMass_kgHa = SOILPROP%BD(L) * SOILPROP%DLAYR(L) * 100000.0
+              ! Estimate total biochar mass from Carbon (assuming ~70% C if FCarbon is 0)
+              BC_Mass_Fraction = (BC_Total_C / MAX(0.1, BC_Apps(1)%FCarbon)) / MAX(1.0, SoilMass_kgHa)
 
-                 
-                 ! 3. Calculate Effective Properties with Biochar Delta
-                 
-                 ! Update BD
-                 Biochar_OM_Eff = BC_Mass_g_g(L) * EXP(KBD_Avg)
-                 Biochar_OM_Prev = Prev_BC_Mass_g_g(L) * EXP(KBD_Avg)
-                 
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Prev, &
-                                  BD_Nat, LL_Nat, DUL_Nat, SAT_Nat)
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Eff, &
-                                  BD_BC, LL_BC, DUL_BC, SAT_BC)
-                 
-                 ! Delta approach:
-                 SOILPROP%BD(L) = SOILPROP%BD(L) + (BD_BC - BD_Nat)
-                 SOILPROP%BD(L) = MAX(0.5, MIN(SOILPROP%BD(L), 2.0))
-                 
-                 ! Update Water Limits
-                 ! DUL
-                 Biochar_OM_Eff = BC_Mass_g_g(L) * EXP(KDUL_Avg)
-                 Biochar_OM_Prev = Prev_BC_Mass_g_g(L) * EXP(KDUL_Avg)
+              ! 2. Native Soil Properties (Sand/Clay/Organic Matter as fractions)
+              S      = SOILPROP%SAND(L) / 100.0
+              C      = SOILPROP%CLAY(L) / 100.0
+              OM_Nat = SOILPROP%OC(L) * 1.72 / 100.0  ! Convert OC to OM fraction
+              OM_New = OM_Nat + (BC_Mass_Fraction * EXP(KBD)) ! Effective OM
 
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Prev, &
-                                  BD_Nat, LL_Nat, DUL_Nat, SAT_Nat)
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Eff, &
-                                  BD_BC, LL_BC, DUL_BC, SAT_BC)
-                 SOILPROP%DUL(L) = SOILPROP%DUL(L) + (DUL_BC - DUL_Nat)
-                 
-                 ! LL
-                 Biochar_OM_Eff = BC_Mass_g_g(L) * EXP(QLL_Avg)
-                 Biochar_OM_Prev = Prev_BC_Mass_g_g(L) * EXP(QLL_Avg)
+              ! 3. Get Native and New Properties via Saxton-Rawls
+              CALL SaxtonRawls(S, C, OM_Nat, BD_Old, LL_Old, DUL_Old, SAT_Old)
+              CALL SaxtonRawls(S, C, OM_New, BD_New, LL_New, DUL_New, SAT_New)
 
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Prev, &
-                                  BD_Nat, LL_Nat, DUL_Nat, SAT_Nat)
-                 CALL SaxtonRawls(Sand, Clay, OrgC_Native + Biochar_OM_Eff, &
-                                  BD_BC, LL_BC, DUL_BC, SAT_BC)
-                 SOILPROP%LL(L) = SOILPROP%LL(L) + (LL_BC - LL_Nat)
-                 
-                 ! 4. Consistency Checks
-                 ! SAT (Driven by BD primarily)
-                 SOILPROP%SAT(L) = 1.0 - (SOILPROP%BD(L)/2.65)
-                 SOILPROP%SAT(L) = MAX(SOILPROP%DUL(L)+0.01, SOILPROP%SAT(L))
-                 
-                 ! Ensure LL < DUL
-                 SOILPROP%DUL(L) = MAX(SOILPROP%LL(L)+0.01, SOILPROP%DUL(L))
-                 
-                 ! Update Porosity
-                 SOILPROP%POROS(L) = SOILPROP%SAT(L)
-                 
-                 ! Recalculate KG2PPM
-                 SOILPROP%KG2PPM(L) = 10.0 / (SOILPROP%BD(L) * SOILPROP%DLAYR(L))
-                 
-                 ! Save state for tomorrow
-                 Prev_BC_Mass_g_g(L) = BC_Mass_g_g(L)
-             END IF
+              ! 4. Apply Saxton-Rawls Delta + Calibration Modifiers
+              SOILPROP%BD(L)  = MAX(0.5, MIN(2.0, NativeBD(L) + (BD_New - BD_Old)))
+              SOILPROP%LL(L)  = MAX(0.01, NativeLL(L) + (LL_New - LL_Old) + (BC_Mass_Fraction * QLL))
+              SOILPROP%DUL(L) = MAX(SOILPROP%LL(L)+0.01, NativeDUL(L) + (DUL_New - DUL_Old) + (BC_Mass_Fraction * KDUL))
+              SOILPROP%SAT(L) = MAX(SOILPROP%DUL(L)+0.01, 1.0 - (SOILPROP%BD(L)/2.65))
           END DO
       END SUBROUTINE Biochar_UpdateSoilProps
 
 !=======================================================================
-!     Saxton & Rawls (2006) Pedotransfer Functions
+!  GetBiocharPriming
+!  Purpose: Provides priming modifiers to the SOM decomposition modules.
 !=======================================================================
-      SUBROUTINE SaxtonRawls(Sand, Clay, OM, BD, LL, DUL, SAT)
-          REAL, INTENT(IN)  :: Sand, Clay, OM
+      SUBROUTINE GetBiocharPriming(L, BC_Tot, P_Rate, P_Eff, P_Biom)
+          INTEGER, INTENT(IN)  :: L        ! Soil Layer
+          REAL,    INTENT(OUT) :: BC_Tot   ! Total Biochar C (kg/ha)
+          REAL,    INTENT(OUT) :: P_Rate   ! Priming on decomp rate
+          REAL,    INTENT(OUT) :: P_Eff    ! Priming on efficiency
+          REAL,    INTENT(OUT) :: P_Biom   ! Priming on partitioning
+          
+          BC_Tot = BC_Labile(L) + BC_Recalc(L)
+          P_Rate = 1.0 + P_FOM * (BC_Tot / 10000.0)
+          P_Eff  = MAX(0.0, 1.0 + P_E * (BC_Tot / 10000.0))
+          P_Biom = MAX(0.0, 1.0 + P_F * (BC_Tot / 10000.0))
+      END SUBROUTINE GetBiocharPriming
+
+!=======================================================================
+!  SaxtonRawls: Pedotransfer logic
+!=======================================================================
+      SUBROUTINE SaxtonRawls(S, C, OM, BD, LL, DUL, SAT)
+          REAL, INTENT(IN)  :: S, C, OM
           REAL, INTENT(OUT) :: BD, LL, DUL, SAT
-          
-          REAL :: S, C, O
-          REAL :: Theta_1500, Theta_1500t
-          REAL :: Theta_33, Theta_33t
-          REAL :: Theta_S_33, Theta_S_33t
-          
-          S = Sand
+          REAL :: T1500t, T1500, T33t, T33, TS33t, TS33
 
-          C = Clay
-          O = OM
-          
-          ! 1. Permanent Wilting Point (LL) -> Theta_1500 (1500 kPa)
-          Theta_1500t = -0.024 * S + 0.487 * C + 0.006 * O + &
-                        0.005 * (S * O) - 0.013 * (C * O) + &
-                        0.068 * (S * C) + 0.031
-          Theta_1500 = Theta_1500t + (0.14 * Theta_1500t - 0.02)
-          LL = Theta_1500
-          
-          ! 2. Field Capacity (DUL) -> Theta_33 (33 kPa)
-          Theta_33t = -0.251 * S + 0.195 * C + 0.011 * O + &
-                      0.006 * (S * O) - 0.027 * (C * O) + &
-                      0.452 * (S * C) + 0.299
-          Theta_33 = Theta_33t + (1.283 * Theta_33t * Theta_33t - &
-                     0.374 * Theta_33t - 0.015)
-          DUL = Theta_33
-          
-          ! 3. Saturation (SAT)
-          Theta_S_33t = 0.278 * S + 0.034 * C + 0.022 * O - &
-                        0.018 * (S * O) - 0.027 * (C * O) - &
-                        0.584 * (S * C) + 0.078
-          Theta_S_33 = Theta_S_33t + (0.636 * Theta_S_33t - 0.107)
-          
-          SAT = DUL + Theta_S_33 - 0.097 * S + 0.043
-          
-          ! Now BD
-          BD = (1.0 - SAT) * 2.65
-          
-          ! Sanity Checks
+          T1500t = -0.024*S + 0.487*C + 0.006*OM + 0.005*(S*OM) - 0.013*(C*OM) + 0.068*(S*C) + 0.031
+          T1500  = T1500t + (0.14 * T1500t - 0.02)
+          LL     = T1500
 
-          SAT = MIN(0.9, MAX(0.2, SAT))
-          BD  = (1.0 - SAT) * 2.65
-          BD  = MIN(2.0, MAX(0.8, BD))
-          DUL = MIN(SAT-0.01, MAX(0.05, DUL))
-          LL  = MIN(DUL-0.01, MAX(0.01, LL))
-          
+          T33t   = -0.251*S + 0.195*C + 0.011*OM + 0.006*(S*OM) - 0.027*(C*OM) + 0.452*(S*C) + 0.299
+          T33    = T33t + (1.283 * T33t**2 - 0.374 * T33t - 0.015)
+          DUL    = T33
+
+          TS33t  = 0.278*S + 0.034*C + 0.022*OM - 0.018*(S*OM) - 0.027*(C*OM) - 0.584*(S*C) + 0.078
+          TS33   = TS33t + (0.636 * TS33t - 0.107)
+          SAT    = DUL + TS33 - 0.097*S + 0.043
+          BD     = (1.0 - SAT) * 2.65
       END SUBROUTINE SaxtonRawls
 
       END MODULE Biochar_mod

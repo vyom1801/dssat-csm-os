@@ -89,6 +89,8 @@ C-----------------------------------------------------------------------
 !***********************************************************************
       ELSEIF (DYNAMIC .EQ. RATE) THEN
 !-----------------------------------------------------------------------
+      PRINT *, 'DEBUG: SOILEV - Soil Evaporation Start: Potential Evap (mm/d)=', EOS, ', Water for Infiltration (mm)=', WINF
+
 C  Adjust soil evaporation, and the sum of stage 1 (SUMES1) and stage 2
 C    (SUMES2) evaporation based on infiltration (WINF), potential
 C    soil evaporation (EOS), and stage 1 evaporation (U).
@@ -172,6 +174,8 @@ C-----------------------------------------------------------------------
         ES = SWMIN * DLAYR(1) * 10.
       ENDIF
       ES = MAX(ES, 0.0)
+
+      PRINT *, 'DEBUG: SOILEV - Soil Evaporation End: Actual Evap (mm/d)=', ES
 
 !***********************************************************************
 !***********************************************************************
@@ -263,4 +267,3 @@ C-----------------------------------------------------------------------
 ! WINF        Potential Precipitation for infiltration (mm)
 ! WINFMOD     Interrim value of WINF, water available for infiltration (mm)
 !-----------------------------------------------------------------------
-

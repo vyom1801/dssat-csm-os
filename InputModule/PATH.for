@@ -74,7 +74,7 @@ C-SUN       PATHC  = LINE(8:80)
             ELSE
               PATHL = PATHL - 1
             ENDIF
-            NAMEF  = PATHC (PATHL+1:PATHL+13)
+            NAMEF  = PATHC (PATHL+1:PATHL+10)
             IF (PATHL .LT. 80) THEN
                DO K = (PATHL+1),80
                   IF (PATHC(K:K) .NE. BLANK) THEN

@@ -42,6 +42,8 @@ C=======================================================================
       REAL SWCN(NL), SWDELTS(NL), SWTEMP(NL)
 
 !-----------------------------------------------------------------------
+      PRINT *, 'DEBUG: INFIL - Infiltration Calculation Start: Potential Infiltration (cm)=', PINF
+
       DO L = 1, NLAYR
         DRN(L) = 0.0
         SWDELTS(L) = 0.0
@@ -141,6 +143,8 @@ C           If there is excess water, redistribute it in layers above.
       ENDDO
 
       DRAIN = PINF * 10.0
+      PRINT *, 'DEBUG: INFIL - Infiltration Calculation End: Drainage (mm)=', DRAIN, ', Excess Surface Water (cm)=', EXCS
+
 !-----------------------------------------------------------------------
       DO L = 1, NLAYR
           SWDELTS(L) = SWTEMP(L) - SW(L)
